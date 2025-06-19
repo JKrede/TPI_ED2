@@ -1,9 +1,9 @@
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 60 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 62 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 65 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 67 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 85 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 88 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 91 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 109 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[305] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 330 : Using default destination of 1 (file).
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 61 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 63 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 66 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 68 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 86 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 89 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 92 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 110 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[305] C:\USERS\JULIAN\MPLABXPROJECTS\TRABAJO PRACTICO FINAL.X\PRUEBA_MODULO_TECLADO.ASM 332 : Using default destination of 1 (file).

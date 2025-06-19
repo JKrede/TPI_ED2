@@ -21,6 +21,7 @@
 DELAY1DSPL    EQU   0x20    ; Contador delay para displays (primer nivel)
 DELAY2DSPL    EQU   0x21    ; Contador delay para displays (segundo nivel)
 DELAY3DSPL    EQU   0x22    ; Contador delay para displays (tercer nivel)
+TEMP_VAL_ADC  EQU   0x23    ; Valor temporal del ADC para realizar la descomposicion
 
 ; Variables en banco común (0x70-0x7F)
 VAL_ADC       EQU   0x70    ; Valor crudo del ADC (0-255)
@@ -84,23 +85,25 @@ REFRESH
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    BCF		    STATUS, RP1
+		    MOVF	    VAL_ADC, W
+		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
 		    CLRF	    VAL_ADC_D	    ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
 		    CLRF	    VAL_ADC_C	    ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
 		    CLRF	    VAL_ADC_M	    ;NUNCA VALE DISTINTO DE CERO
 		    
 TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
-		    SUBWF	    VAL_ADC, F
+		    SUBWF	    TEMP_VAL_ADC, F
 		    BTFSC	    STATUS,C
 		    GOTO	    ADD_C
 		    
 TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
-		    SUBWF	    VAL_ADC, F
+		    SUBWF	    TEMP_VAL_ADC, F
 		    BTFSC	    STATUS,C
 		    GOTO	    ADD_D
 		    
 TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
-		    SUBWF	    VAL_ADC, F
+		    SUBWF	    TEMP_VAL_ADC, F
 		    BTFSC	    STATUS,C
 		    GOTO	    ADD_U
 		    RETURN	
