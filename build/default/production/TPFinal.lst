@@ -1,4 +1,4 @@
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  1
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
   00000023            00041 TEMP_VAL_ADC  EQU   0x23    ; Valor temporal del ADC para realizar la descomposicion
                       00042 
                       00043 ; Variables en banco común (0x70-0x7F)
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  2
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -103,7 +103,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00081                                     ; <RB4-RB6> ENTRADAS
                       00082     BANKSEL         WPUB            
                       00083     BCF             OPTION_REG,7
-                      00084     MOVLW           0XFF
+                      00084     MOVLW           B'01110000'
                       00085     MOVWF           WPUB            ; RESISTENCIAS PULL-UPS ACTIVADAS
                       00086     BANKSEL         PORTB
                       00087     MOVLW           B'01110000'     
@@ -116,7 +116,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00094 ;----------------------------------------------------------------
                       00095 ; Configura los puertos para controlar 4 displays de 7 segmentos:
                       00096 ;   - PORTD como salida (segmentos a-g)
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  3
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -175,7 +175,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00147     MOVWF           ADCON0
                       00148 
                       00149     CLRF            DELAY1TMR0   ; Inicializa contadores para
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  4
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -234,7 +234,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00200     BANKSEL         TXSTA
                       00201     MOVLW           B'00100100'  ; BRGH=1 (alta velocidad), TXEN=1 (habilitar TX)
                       00202     MOVWF           TXSTA
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  5
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -277,7 +277,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
 000A   1683 1303          M     BANKSEL         WPUB            
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
 000C   1381               M     BCF             OPTION_REG,7
-000D   30FF               M     MOVLW           0XFF
+000D   3070               M     MOVLW           B'01110000'
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
 000E   0095               M     MOVWF           WPUB            ; RESISTENCIAS PULL-UPS ACTIVADAS
 000F   1283 1303          M     BANKSEL         PORTB
@@ -293,7 +293,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
 0017   1683 1303          M     BANKSEL         TRISD
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
 0019   0188               M     CLRF            TRISD        ; PORTD completo como salida (segmentos)
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  6
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -352,7 +352,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
 003F   0098               M     MOVWF           RCSTA
                           M 
 0040   1683 1703          M     BANKSEL         BAUDCTL
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  7
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -411,7 +411,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
                       00273 
 0061   1D03           00274                     BTFSS           STATUS, Z         ; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
 0062   2???           00275                     GOTO            DESACTIVAR_ALARMA ; Decena ADC mayor que umbral -> Desactivar
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  8
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -470,7 +470,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                             DA CUANDO ES 0)          
 007F   07A3           00326                     ADDWF           TEMP_VAL_ADC, F 
 0080   2???           00327                     GOTO            TEST_D 
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE  9
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -529,7 +529,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 00A2   0088           00375                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
                             RRESPONDIENTE FORMATO
 00A3   2???           00376                     CALL            DELAY5ms
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 10
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 10
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -588,7 +588,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00424                     
                       00425                     
                       00426                     
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 11
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 11
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -647,7 +647,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
                       00475 ;------------------------------------------------
 00E3   01F4           00476 ISR_TECLADO         CLRF            POS_TECLA
                       00477                     
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 12
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 12
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -706,7 +706,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 010A   1903           00528                     BTFSC           STATUS, Z
 010B   2???           00529                     GOTO            CAMBIAR_DSPL
                       00530                 
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 13
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 13
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -765,7 +765,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 012A                  00581 CAMBIAR_DSPL        
 012A   3001           00582                     MOVLW           B'00000001'
 012B   06F7           00583                     XORWF           OPCIONES, F                    
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 14
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 14
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -824,7 +824,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 014B   2???           00633                     CALL            TABLA_DSPL
 014C   0088           00634                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
                             RRESPONDIENTE FORMATO
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 15
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 15
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -883,7 +883,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 016B   303D           00680                     MOVLW           .61
 016C   0081           00681                     MOVWF           TMR0            ;RECARGO EL TMR0 CON 61
 016D   0BF8           00682                     DECFSZ          DELAY1TMR0, F
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 16
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 16
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -936,7 +936,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00725                     
                       00726                     
 2FF1                  00727                     END
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 17
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 17
 
 
 SYMBOL TABLE
@@ -995,7 +995,7 @@ BRG2                              00000002
 BRG3                              00000003
 BRG4                              00000004
 BRG5                              00000005
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 18
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 18
 
 
 SYMBOL TABLE
@@ -1054,7 +1054,7 @@ CCP2M2                            00000002
 CCP2M3                            00000003
 CCP2X                             00000005
 CCP2Y                             00000004
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 19
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 19
 
 
 SYMBOL TABLE
@@ -1113,7 +1113,7 @@ ECCPASE                           00000007
 EEADR                             0000010D
 EEADRH                            0000010F
 EECON1                            0000018C
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 20
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 20
 
 
 SYMBOL TABLE
@@ -1172,7 +1172,7 @@ MOSTRAR_TECLADO                   00000140
 MSK                               00000093
 MSK0                              00000000
 MSK1                              00000001
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 21
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 21
 
 
 SYMBOL TABLE
@@ -1231,7 +1231,7 @@ PORTB                             00000006
 PORTC                             00000007
 PORTD                             00000008
 PORTE                             00000009
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 22
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 22
 
 
 SYMBOL TABLE
@@ -1290,7 +1290,7 @@ RCREG                             0000001A
 RCSTA                             00000018
 RD                                00000000
 RD0                               00000000
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 23
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 23
 
 
 SYMBOL TABLE
@@ -1349,7 +1349,7 @@ SSPOV                             00000006
 SSPSTAT                           00000094
 STATUS                            00000003
 STATUS_TEMP                       0000007B
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 24
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 24
 
 
 SYMBOL TABLE
@@ -1408,7 +1408,7 @@ TOUTPS0                           00000003
 TOUTPS1                           00000004
 TOUTPS2                           00000005
 TOUTPS3                           00000006
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 25
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 25
 
 
 SYMBOL TABLE
@@ -1467,7 +1467,7 @@ TX9D                              00000000
 TXD8                              00000000
 TXEN                              00000005
 TXIE                              00000004
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 26
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 26
 
 
 SYMBOL TABLE
@@ -1526,7 +1526,7 @@ Z                                 00000002
 _BOR21V                           00003EFF
 _BOR40V                           00003FFF
 _BOR4V_BOR21V                     00003EFF
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 27
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 27
 
 
 SYMBOL TABLE
@@ -1585,7 +1585,7 @@ _PWRTE_OFF                        00003FFF
 _PWRTE_ON                         00003FEF
 _WDTE_OFF                         00003FF7
 _WDTE_ON                          00003FFF
-MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:26:37         PAGE 28
+MPASM 5.81                       TPFINAL.ASM   6-19-2025  14:32:59         PAGE 28
 
 
 SYMBOL TABLE

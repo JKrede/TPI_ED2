@@ -484,6 +484,8 @@
                   value=""/>
         <property key="warningmessagebreakoptions.warningmessages" value="holdstate"/>
       </Simulator>
+      <item path="TPFinal.asm" ex="true" overriding="false">
+      </item>
       <mpasmsuite>
         <property key="absolute-mode" value="false"/>
         <property key="eeprom-width" value="8"/>
@@ -523,7 +525,7 @@
         <mpasmsuite>
         </mpasmsuite>
       </item>
-      <item path="prueba_modulo_teclado.asm" ex="true" overriding="false">
+      <item path="prueba_modulo_teclado.asm" ex="false" overriding="false">
         <MPASMWIN-AS>
         </MPASMWIN-AS>
         <MPASMWIN-LD>

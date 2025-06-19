@@ -596,6 +596,8 @@ CAMBIAR_ALARMA
 		    GOTO	    FIN_ISR_TECLADO
 		    		    
 FIN_ISR_TECLADO	    
+		    MOVLW	    B'00001111'
+		    MOVWF	    PORTB
 		    BCF		    INTCON, RBIF
 		    RETURN  
 		    

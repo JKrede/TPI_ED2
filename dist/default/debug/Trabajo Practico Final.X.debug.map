@@ -1,5 +1,5 @@
 MPLINK 5.09, LINKER
-Linker Map File - Created Thu Jun 19 14:40:37 2025
+Linker Map File - Created Thu Jun 19 14:43:55 2025
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
@@ -8,7 +8,7 @@ Linker Map File - Created Thu Jun 19 14:40:37 2025
                    .cinit    romdata   0x000001    program   0x000004
                    .org_1       code   0x000004    program   0x000002
                    .org_2       code   0x000005    program   0x00020a
-.config_2007_BUILD/DEFAULT/PRODUCTION/PRUEBA_       code   0x002007    program   0x000002
+.config_2007_BUILD/DEFAULT/DEBUG/PRUEBA_MODUL       code   0x002007    program   0x000002
 
 
 
