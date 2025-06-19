@@ -1,4 +1,4 @@
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  1
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
   00000076            00041 TECLA_ACTIVA  EQU   0x76    ; Tecla actualmente presionada
   00000077            00042 OPCIONES      EQU   0x77    ; Registro de opciones:
                       00043                              ;   BIT 0: Modo display (0=ADC, 1=Teclado)
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  2
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00094     MOVWF           ANSEL
                       00095 
                       00096     BANKSEL         TRISD
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  3
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -175,7 +175,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
 000E   0095               M     MOVWF           WPUB            ; RESISTENCIAS PULL-UPS ACTIVADAS
 000F   1283 1303          M     BANKSEL         PORTB
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  4
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -234,7 +234,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
                       00162 ;----------------------------------------------------------
                       00163 
 002D   1283           00164 DESCOMP_VAL_ADC     BCF             STATUS, RP0
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  5
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -293,7 +293,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00212 ;------------------------------------------------
 0050   2???           00213 SHOW_ADC_DISPLAY    CALL            DESCOMP_VAL_ADC
                       00214                     
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  6
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -352,7 +352,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00261                     
                       00262 
                       00263                     ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSIT
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  7
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -391,231 +391,233 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0086   01F4           00293 ISR_TECLADO         CLRF            POS_TECLA
                       00294                     
 0087   01F6           00295                     CLRF            TECLA_ACTIVA
-0088   3003           00296                     MOVLW           .3
-0089   0275           00297                     SUBWF           N_TECLA, W
-008A   1903           00298                     BTFSC           STATUS,Z
-008B   01F5           00299                     CLRF            N_TECLA
-008C   1283 1303      00300                     BANKSEL         PORTB
-008E   30FE           00301                     MOVLW           B'11111110'
-008F   0086           00302                     MOVWF           PORTB
-0090   0000           00303                     NOP
-0091   2???           00304                     GOTO            TEST_COL
-                      00305                     
-                      00306         
-0092   0AF4           00307 TEST_COL            INCF            POS_TECLA, F
-0093   1E06           00308                     BTFSS           PORTB, RB4      ;TESTEA COLUMNA1
-0094   2???           00309                     GOTO            TECLA_PRES
-                      00310                     
-0095   0AF4           00311                     INCF            POS_TECLA, F
-0096   1E86           00312                     BTFSS           PORTB, RB5      ;TESTEA COLUMNA2
-0097   2???           00313                     GOTO            TECLA_PRES
-                      00314                     
-0098   0AF4           00315                     INCF            POS_TECLA, F
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  8
+                      00296                     
+0088   3003           00297                     MOVLW           .3              ;VERIFICA QUE N_TECLA NO SUPERE 3
+0089   0275           00298                     SUBWF           N_TECLA, W
+008A   1903           00299                     BTFSC           STATUS,Z
+008B   01F5           00300                     CLRF            N_TECLA
+                      00301                     
+008C   1283 1303      00302                     BANKSEL         PORTB
+008E   30FE           00303                     MOVLW           B'11111110'
+008F   0086           00304                     MOVWF           PORTB
+0090   0000           00305                     NOP
+0091   2???           00306                     GOTO            TEST_COL
+                      00307                     
+                      00308         
+0092   0AF4           00309 TEST_COL            INCF            POS_TECLA, F
+0093   1E06           00310                     BTFSS           PORTB, RB4      ;TESTEA COLUMNA1
+0094   2???           00311                     GOTO            TECLA_PRES
+                      00312                     
+0095   0AF4           00313                     INCF            POS_TECLA, F
+0096   1E86           00314                     BTFSS           PORTB, RB5      ;TESTEA COLUMNA2
+0097   2???           00315                     GOTO            TECLA_PRES
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0099   1F06           00316                     BTFSS           PORTB, RB6      ;TESTEA COLUMNA3
-009A   2???           00317                     GOTO            TECLA_PRES
-009B   2???           00318                     GOTO            CAMBIAR_FILA
-                      00319 
-009C   300C           00320 CAMBIAR_FILA        MOVLW           .12
-009D   0274           00321                     SUBWF           POS_TECLA, W
-009E   1903           00322                     BTFSC           STATUS, Z
-009F   2???           00323                     GOTO            FIN_ISR_TECLADO ;FINALIZA 
-00A0   1403           00324                     BSF             STATUS, C
-00A1   0D86           00325                     RLF             PORTB, F        ;MUEVE EL CERO A LA IZQUIERDA
-00A2   2???           00326                     GOTO            TEST_COL
-                      00327                     
-                      00328                     
-00A3   1E06           00329 TECLA_PRES          BTFSS           PORTB, RB4      ;----------
-00A4   2???           00330                     GOTO            TECLA_PRES      ;
-00A5   1E86           00331                     BTFSS           PORTB, RB5      ;ANTIREBOTE
-00A6   2???           00332                     GOTO            TECLA_PRES      ;ANTIREBOTE
-00A7   1F06           00333                     BTFSS           PORTB, RB6      ;
-00A8   2???           00334                     GOTO            TECLA_PRES      ;----------
-                      00335                     
-                      00336                     ; VERIFICA SI ES UNA TECLA ESPECIAL
-00A9   0874           00337                     MOVF            POS_TECLA, W
-00AA   00F6           00338                     MOVWF           TECLA_ACTIVA
-                      00339                 
-                      00340                     ; TECLA '*' (POSICION 10): CAMBIA DISPLAY
-00AB   300A           00341                     MOVLW           .10
-00AC   0276           00342                     SUBWF           TECLA_ACTIVA, W
-00AD   1903           00343                     BTFSC           STATUS, Z
-00AE   2???           00344                     GOTO            CAMBIAR_DSPL
-                      00345                 
-                      00346                     ; TECLA '#' (POSICION 12): ACTIVA/DESACTIVA ALARMA
-00AF   300C           00347                     MOVLW           .12
-00B0   0276           00348                     SUBWF           TECLA_ACTIVA, W
-00B1   1903           00349                     BTFSC           STATUS, Z
-00B2   2???           00350                     GOTO            CAMBIAR_ALARMA
-                      00351                 
-                      00352                     ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
-00B3   0AF5           00353                     INCF            N_TECLA, F
-00B4   3001           00354                     MOVLW           .1
-00B5   0275           00355                     SUBWF           N_TECLA,W
-00B6   1903           00356                     BTFSC           STATUS,Z
-00B7   2???           00357                     GOTO            CARGAR_UMBRAL_C
-                      00358                     
-00B8   3002           00359                     MOVLW           .2
-00B9   0275           00360                     SUBWF           N_TECLA,W
-00BA   1903           00361                     BTFSC           STATUS,Z
-00BB   2???           00362                     GOTO            CARGAR_UMBRAL_D
-                      00363                     
-00BC   3003           00364                     MOVLW           .3
-00BD   0275           00365                     SUBWF           N_TECLA,W
-00BE   1903           00366                     BTFSC           STATUS,Z
-00BF   2???           00367                     GOTO            CARGAR_UMBRAL_U
-                      00368                           
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE  9
+                      00316                     
+0098   0AF4           00317                     INCF            POS_TECLA, F
+0099   1F06           00318                     BTFSS           PORTB, RB6      ;TESTEA COLUMNA3
+009A   2???           00319                     GOTO            TECLA_PRES
+009B   2???           00320                     GOTO            CAMBIAR_FILA
+                      00321 
+009C   300C           00322 CAMBIAR_FILA        MOVLW           .12
+009D   0274           00323                     SUBWF           POS_TECLA, W
+009E   1903           00324                     BTFSC           STATUS, Z
+009F   2???           00325                     GOTO            FIN_ISR_TECLADO ;FINALIZA 
+00A0   1403           00326                     BSF             STATUS, C
+00A1   0D86           00327                     RLF             PORTB, F        ;MUEVE EL CERO A LA IZQUIERDA
+00A2   2???           00328                     GOTO            TEST_COL
+                      00329                     
+                      00330                     
+00A3   1E06           00331 TECLA_PRES          BTFSS           PORTB, RB4      ;----------
+00A4   2???           00332                     GOTO            TECLA_PRES      ;
+00A5   1E86           00333                     BTFSS           PORTB, RB5      ;ANTIREBOTE
+00A6   2???           00334                     GOTO            TECLA_PRES      ;ANTIREBOTE
+00A7   1F06           00335                     BTFSS           PORTB, RB6      ;
+00A8   2???           00336                     GOTO            TECLA_PRES      ;----------
+                      00337                     
+                      00338                     ; VERIFICA SI ES UNA TECLA ESPECIAL
+00A9   0874           00339                     MOVF            POS_TECLA, W
+00AA   00F6           00340                     MOVWF           TECLA_ACTIVA
+                      00341                 
+                      00342                     ; TECLA '*' (POSICION 10): CAMBIA DISPLAY
+00AB   300A           00343                     MOVLW           .10
+00AC   0276           00344                     SUBWF           TECLA_ACTIVA, W
+00AD   1903           00345                     BTFSC           STATUS, Z
+00AE   2???           00346                     GOTO            CAMBIAR_DSPL
+                      00347                 
+                      00348                     ; TECLA '#' (POSICION 12): ACTIVA/DESACTIVA ALARMA
+00AF   300C           00349                     MOVLW           .12
+00B0   0276           00350                     SUBWF           TECLA_ACTIVA, W
+00B1   1903           00351                     BTFSC           STATUS, Z
+00B2   2???           00352                     GOTO            CAMBIAR_ALARMA
+                      00353                 
+                      00354                     ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
+00B3   0AF5           00355                     INCF            N_TECLA, F
+00B4   3001           00356                     MOVLW           .1
+00B5   0275           00357                     SUBWF           N_TECLA,W
+00B6   1903           00358                     BTFSC           STATUS,Z
+00B7   2???           00359                     GOTO            CARGAR_UMBRAL_C
+                      00360                     
+00B8   3002           00361                     MOVLW           .2
+00B9   0275           00362                     SUBWF           N_TECLA,W
+00BA   1903           00363                     BTFSC           STATUS,Z
+00BB   2???           00364                     GOTO            CARGAR_UMBRAL_D
+                      00365                     
+00BC   3003           00366                     MOVLW           .3
+00BD   0275           00367                     SUBWF           N_TECLA,W
+00BE   1903           00368                     BTFSC           STATUS,Z
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00C0   2???           00369                     GOTO            FIN_ISR_TECLADO
-                      00370                     
-                      00371                     
-00C1                  00372 CARGAR_UMBRAL_C    
-00C1   0874           00373                     MOVF            POS_TECLA, W
-00C2   2???           00374                     CALL            TABLA_TECLADO
-00C3   00F3           00375                     MOVWF           VAL_UMBRAL_C
-00C4   2???           00376                     GOTO            FIN_ISR_TECLADO
-                      00377 
-00C5                  00378 CARGAR_UMBRAL_D    
-00C5   0874           00379                     MOVF            POS_TECLA, W
-00C6   2???           00380                     CALL            TABLA_TECLADO
-00C7   00F2           00381                     MOVWF           VAL_UMBRAL_D
-00C8   2???           00382                     GOTO            FIN_ISR_TECLADO
-                      00383                     
-00C9                  00384 CARGAR_UMBRAL_U     
-00C9   0874           00385                     MOVF            POS_TECLA, W
-00CA   2???           00386                     CALL            TABLA_TECLADO
-00CB   00F1           00387                     MOVWF           VAL_UMBRAL_U
-00CC   2???           00388                     GOTO            FIN_ISR_TECLADO
-                      00389 
-                      00390 ;----------------------------------------------
-                      00391 ; CAMBIAR_DSPL: Alterna modo de visualización
-                      00392 ;   Alterna BIT 0 de OPCIONES:
-                      00393 ;     0 = Muestra valores del ADC
-                      00394 ;     1 = Muestra valores del teclado (umbral)
-                      00395 ;----------------------------------------------
-00CD                  00396 CAMBIAR_DSPL        
-00CD   3001           00397                     MOVLW           B'00000001'
-00CE   06F7           00398                     XORWF           OPCIONES, F                    
-00CF   2???           00399                     GOTO            FIN_ISR_TECLADO
-                      00400 
-                      00401 ;-----------------------------------------
-                      00402 ; CAMBIAR_ALARMA: Activa/desactiva alarma
-                      00403 ;   Alterna BIT 1 de OPCIONES:
-                      00404 ;     0 = Alarma desactivada
-                      00405 ;     1 = Alarma activada
-                      00406 ;   Control físico en RC0
-                      00407 ;-----------------------------------------
-00D0                  00408 CAMBIAR_ALARMA      
-00D0   3002           00409                     MOVLW           B'00000010'     
-00D1   06F7           00410                     XORWF           OPCIONES, F    
-00D2   2???           00411                     GOTO            FIN_ISR_TECLADO
-                      00412                                     
-00D3                  00413 FIN_ISR_TECLADO     
-00D3   300F           00414                     MOVLW           B'00001111'
-00D4   0086           00415                     MOVWF           PORTB
-00D5   100B           00416                     BCF             INTCON, RBIF
-00D6   0008           00417                     RETURN  
-                      00418                     
-                      00419                     
-00D7                  00420 TABLA_TECLADO       
-00D7   0782           00421                     ADDWF           PCL, F
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 10
+00BF   2???           00369                     GOTO            CARGAR_UMBRAL_U
+                      00370                           
+00C0   2???           00371                     GOTO            FIN_ISR_TECLADO
+                      00372                     
+                      00373                     
+00C1                  00374 CARGAR_UMBRAL_C    
+00C1   0874           00375                     MOVF            POS_TECLA, W
+00C2   2???           00376                     CALL            TABLA_TECLADO
+00C3   00F3           00377                     MOVWF           VAL_UMBRAL_C
+00C4   2???           00378                     GOTO            FIN_ISR_TECLADO
+                      00379 
+00C5                  00380 CARGAR_UMBRAL_D    
+00C5   0874           00381                     MOVF            POS_TECLA, W
+00C6   2???           00382                     CALL            TABLA_TECLADO
+00C7   00F2           00383                     MOVWF           VAL_UMBRAL_D
+00C8   2???           00384                     GOTO            FIN_ISR_TECLADO
+                      00385                     
+00C9                  00386 CARGAR_UMBRAL_U     
+00C9   0874           00387                     MOVF            POS_TECLA, W
+00CA   2???           00388                     CALL            TABLA_TECLADO
+00CB   00F1           00389                     MOVWF           VAL_UMBRAL_U
+00CC   2???           00390                     GOTO            FIN_ISR_TECLADO
+                      00391 
+                      00392 ;----------------------------------------------
+                      00393 ; CAMBIAR_DSPL: Alterna modo de visualización
+                      00394 ;   Alterna BIT 0 de OPCIONES:
+                      00395 ;     0 = Muestra valores del ADC
+                      00396 ;     1 = Muestra valores del teclado (umbral)
+                      00397 ;----------------------------------------------
+00CD                  00398 CAMBIAR_DSPL        
+00CD   3001           00399                     MOVLW           B'00000001'
+00CE   06F7           00400                     XORWF           OPCIONES, F                    
+00CF   2???           00401                     GOTO            FIN_ISR_TECLADO
+                      00402 
+                      00403 ;-----------------------------------------
+                      00404 ; CAMBIAR_ALARMA: Activa/desactiva alarma
+                      00405 ;   Alterna BIT 1 de OPCIONES:
+                      00406 ;     0 = Alarma desactivada
+                      00407 ;     1 = Alarma activada
+                      00408 ;   Control físico en RC0
+                      00409 ;-----------------------------------------
+00D0                  00410 CAMBIAR_ALARMA      
+00D0   3002           00411                     MOVLW           B'00000010'     
+00D1   06F7           00412                     XORWF           OPCIONES, F    
+00D2   2???           00413                     GOTO            FIN_ISR_TECLADO
+                      00414                                     
+00D3                  00415 FIN_ISR_TECLADO     
+00D3   300F           00416                     MOVLW           B'00001111'
+00D4   0086           00417                     MOVWF           PORTB
+00D5   100B           00418                     BCF             INTCON, RBIF
+00D6   0008           00419                     RETURN  
+                      00420                     
+                      00421                     
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 10
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00D8   0000           00422                     NOP                             ;   NO DEBERIA LLEGAR A ESTA LINEA
-00D9   3401           00423                     RETLW           .1              ;1
-00DA   3402           00424                     RETLW           .2              ;2
-00DB   3403           00425                     RETLW           .3              ;3
-00DC   3404           00426                     RETLW           .4              ;4
-00DD   3405           00427                     RETLW           .5              ;5
-00DE   3406           00428                     RETLW           .6              ;6
-00DF   3407           00429                     RETLW           .7              ;7
-00E0   3408           00430                     RETLW           .8              ;8
-00E1   3409           00431                     RETLW           .9              ;9
-00E2   34FF           00432                     RETLW           0XFF            ;*  NO DEBERIA LLEGAR A ESTA LINEA
-00E3   3400           00433                     RETLW           .0              ;0
-00E4   34FE           00434                     RETLW           0XFE            ;#  NO DEBERIA LLEGAR A ESTA LINEA
-                      00435                     
-                      00436                     
-                      00437                         
-00E5                  00438 MOSTRAR_TECLADO    
-00E5   1283 1303      00439                     BANKSEL         PORTA           
-00E7   3001           00440                     MOVLW           B'00000001'
-00E8   0085           00441                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
-00E9   0871           00442                     MOVF            VAL_UMBRAL_U, W
-00EA   2???           00443                     CALL            TABLA_DSPL      
-00EB   0088           00444                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+00D7                  00422 TABLA_TECLADO       
+00D7   0782           00423                     ADDWF           PCL, F
+00D8   0000           00424                     NOP                             ;   NO DEBERIA LLEGAR A ESTA LINEA
+00D9   3401           00425                     RETLW           .1              ;1
+00DA   3402           00426                     RETLW           .2              ;2
+00DB   3403           00427                     RETLW           .3              ;3
+00DC   3404           00428                     RETLW           .4              ;4
+00DD   3405           00429                     RETLW           .5              ;5
+00DE   3406           00430                     RETLW           .6              ;6
+00DF   3407           00431                     RETLW           .7              ;7
+00E0   3408           00432                     RETLW           .8              ;8
+00E1   3409           00433                     RETLW           .9              ;9
+00E2   34FF           00434                     RETLW           0XFF            ;*  NO DEBERIA LLEGAR A ESTA LINEA
+00E3   3400           00435                     RETLW           .0              ;0
+00E4   34FE           00436                     RETLW           0XFE            ;#  NO DEBERIA LLEGAR A ESTA LINEA
+                      00437                     
+                      00438                     
+                      00439                         
+00E5                  00440 MOSTRAR_TECLADO    
+00E5   1283 1303      00441                     BANKSEL         PORTA           
+00E7   3001           00442                     MOVLW           B'00000001'
+00E8   0085           00443                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
+00E9   0871           00444                     MOVF            VAL_UMBRAL_U, W
+00EA   2???           00445                     CALL            TABLA_DSPL      
+00EB   0088           00446                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
                             RRESPONDIENTE FORMATO
-00EC   2???           00445                     CALL            DELAY5ms        
-                      00446                     
-00ED   3002           00447                     MOVLW           B'00000010'
-00EE   0085           00448                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
-00EF   0872           00449                     MOVF            VAL_UMBRAL_D, W
-00F0   2???           00450                     CALL            TABLA_DSPL
-00F1   0088           00451                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
+00EC   2???           00447                     CALL            DELAY5ms        
+                      00448                     
+00ED   3002           00449                     MOVLW           B'00000010'
+00EE   0085           00450                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
+00EF   0872           00451                     MOVF            VAL_UMBRAL_D, W
+00F0   2???           00452                     CALL            TABLA_DSPL
+00F1   0088           00453                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
                             RRESPONDIENTE FORMATO
-00F2   2???           00452                     CALL            DELAY5ms
-                      00453 
-00F3   3004           00454                     MOVLW           B'00000100'
-00F4   0085           00455                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
-00F5   0873           00456                     MOVF            VAL_UMBRAL_C, W
-00F6   2???           00457                     CALL            TABLA_DSPL
-00F7   0088           00458                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
+00F2   2???           00454                     CALL            DELAY5ms
+                      00455 
+00F3   3004           00456                     MOVLW           B'00000100'
+00F4   0085           00457                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
+00F5   0873           00458                     MOVF            VAL_UMBRAL_C, W
+00F6   2???           00459                     CALL            TABLA_DSPL
+00F7   0088           00460                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
                             ORRESPONDIENTE FORMATO
-00F8   2???           00459                     CALL            DELAY5ms
-                      00460                     
-00F9   3008           00461                     MOVLW           B'00001000'
-00FA   0085           00462                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
-00FB   3000           00463                     MOVLW           .0
-00FC   2???           00464                     CALL            TABLA_DSPL
-00FD   0088           00465                     MOVWF           PORTD           
-00FE   2???           00466                     CALL            DELAY5ms
-                      00467                     
-00FF   0008           00468                     RETURN
-                      00469                  
-                      00470 
-                      00471 ;-------------------------
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 11
+00F8   2???           00461                     CALL            DELAY5ms
+                      00462                     
+00F9   3008           00463                     MOVLW           B'00001000'
+00FA   0085           00464                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
+00FB   3000           00465                     MOVLW           .0
+00FC   2???           00466                     CALL            TABLA_DSPL
+00FD   0088           00467                     MOVWF           PORTD           
+00FE   2???           00468                     CALL            DELAY5ms
+                      00469                     
+00FF   0008           00470                     RETURN
+                      00471                  
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 11
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00472 ; Servicio de interrupcion
+                      00472 
                       00473 ;-------------------------
-                      00474                     ;SALVADO DE CONTEXTO
-0100                  00475 ISR                 
-0100   00FA           00476                     MOVWF           W_TEMP
-0101   0E03           00477                     SWAPF           STATUS, W
-0102   00FB           00478                     MOVWF           STATUS_TEMP
-                      00479                     ;FIN DE SALVADO DE CONTEXTO
-                      00480                     ;INICIO ISR                 FUENTES DE INTERRUPCION: PUERTO B(TECLADO), TIMER0(ADC)
-0103   180B           00481                     BTFSC           INTCON, RBIF
-0104   2???           00482                     CALL            ISR_TECLADO
-                      00483                     ;RECUPERACION DE CONTEXTO
-0105   0E7B           00484                     SWAPF           STATUS_TEMP, W
-0106   0083           00485                     MOVWF           STATUS
-0107   0EFA           00486                     SWAPF           W_TEMP, F
-0108   0EFA           00487                     SWAPF           W_TEMP, F
-                      00488                     ;FIN DE RECUPERACION DE CONTEXTO
-0109   0009           00489                     RETFIE
-                      00490                     
-                      00491                     
-2FF1                  00492                     END
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 12
+                      00474 ; Servicio de interrupcion
+                      00475 ;-------------------------
+                      00476                     ;SALVADO DE CONTEXTO
+0100                  00477 ISR                 
+0100   00FA           00478                     MOVWF           W_TEMP
+0101   0E03           00479                     SWAPF           STATUS, W
+0102   00FB           00480                     MOVWF           STATUS_TEMP
+                      00481                     ;FIN DE SALVADO DE CONTEXTO
+                      00482                     ;INICIO ISR                 FUENTES DE INTERRUPCION: PUERTO B(TECLADO), TIMER0(ADC)
+0103   180B           00483                     BTFSC           INTCON, RBIF
+0104   2???           00484                     CALL            ISR_TECLADO
+                      00485                     ;RECUPERACION DE CONTEXTO
+0105   0E7B           00486                     SWAPF           STATUS_TEMP, W
+0106   0083           00487                     MOVWF           STATUS
+0107   0EFA           00488                     SWAPF           W_TEMP, F
+0108   0EFA           00489                     SWAPF           W_TEMP, F
+                      00490                     ;FIN DE RECUPERACION DE CONTEXTO
+0109   0009           00491                     RETFIE
+                      00492                     
+                      00493                     
+2FF1                  00494                     END
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 12
 
 
 SYMBOL TABLE
@@ -674,7 +676,7 @@ BRG3                              00000003
 BRG4                              00000004
 BRG5                              00000005
 BRG6                              00000006
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 13
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 13
 
 
 SYMBOL TABLE
@@ -733,7 +735,7 @@ CCP2M3                            00000003
 CCP2X                             00000005
 CCP2Y                             00000004
 CCPR1                             00000015
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 14
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 14
 
 
 SYMBOL TABLE
@@ -792,7 +794,7 @@ EEDATH                            0000010E
 EEIE                              00000004
 EEIF                              00000004
 EEPGD                             00000007
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 15
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 15
 
 
 SYMBOL TABLE
@@ -851,7 +853,7 @@ NOT_A                             00000005
 NOT_ADDRESS                       00000005
 NOT_BO                            00000000
 NOT_BOR                           00000000
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 16
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 16
 
 
 SYMBOL TABLE
@@ -910,7 +912,7 @@ PSA                               00000003
 PSSAC0                            00000002
 PSSAC1                            00000003
 PSSBD0                            00000000
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 17
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 17
 
 
 SYMBOL TABLE
@@ -969,7 +971,7 @@ RD7                               00000007
 RE0                               00000000
 RE1                               00000001
 RE2                               00000002
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 18
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 18
 
 
 SYMBOL TABLE
@@ -1028,7 +1030,7 @@ T0IE                              00000005
 T0IF                              00000002
 T0SE                              00000004
 T1CKPS0                           00000004
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 19
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 19
 
 
 SYMBOL TABLE
@@ -1087,7 +1089,7 @@ TRISB0                            00000000
 TRISB1                            00000001
 TRISB2                            00000002
 TRISB3                            00000003
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 20
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 20
 
 
 SYMBOL TABLE
@@ -1146,7 +1148,7 @@ VAL_ADC_M                         0000007F
 VAL_ADC_U                         0000007C
 VAL_UMBRAL_C                      00000073
 VAL_UMBRAL_D                      00000072
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 21
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 21
 
 
 SYMBOL TABLE
@@ -1205,7 +1207,7 @@ _CPD_ON                           00003F7F
 _CP_OFF                           00003FFF
 _CP_ON                            00003FBF
 _DEBUG_OFF                        00003FFF
-MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  13:33:57         PAGE 22
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-19-2025  14:25:10         PAGE 22
 
 
 SYMBOL TABLE
