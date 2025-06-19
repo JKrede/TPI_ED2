@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=TPFinal.asm
+SOURCEFILES_QUOTED_IF_SPACED=prueba_modulo_teclado.asm
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/TPFinal.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/TPFinal.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/prueba_modulo_teclado.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/prueba_modulo_teclado.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/TPFinal.o
+OBJECTFILES=${OBJECTDIR}/prueba_modulo_teclado.o
 
 # Source Files
-SOURCEFILES=TPFinal.asm
+SOURCEFILES=prueba_modulo_teclado.asm
 
 
 CFLAGS=
@@ -94,22 +94,22 @@ MP_LINKER_DEBUG_OPTION=
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: assemble
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-${OBJECTDIR}/TPFinal.o: TPFinal.asm  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/prueba_modulo_teclado.o: prueba_modulo_teclado.asm  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/TPFinal.o.d 
-	@${RM} ${OBJECTDIR}/TPFinal.o 
-	@${FIXDEPS} dummy.d -e "${OBJECTDIR}/TPFinal.err" $(SILENT) -c ${MP_AS} $(MP_EXTRA_AS_PRE) -d__DEBUG -d__MPLAB_DEBUGGER_SIMULATOR=1 -q -p$(MP_PROCESSOR_OPTION)  -l\"${OBJECTDIR}/TPFinal.lst\" -e\"${OBJECTDIR}/TPFinal.err\" $(ASM_OPTIONS)    -o\"${OBJECTDIR}/TPFinal.o\" \"TPFinal.asm\" 
-	@${DEP_GEN} -d "${OBJECTDIR}/TPFinal.o"
-	@${FIXDEPS} "${OBJECTDIR}/TPFinal.o.d" $(SILENT) -rsi ${MP_AS_DIR} -c18 
+	@${RM} ${OBJECTDIR}/prueba_modulo_teclado.o.d 
+	@${RM} ${OBJECTDIR}/prueba_modulo_teclado.o 
+	@${FIXDEPS} dummy.d -e "${OBJECTDIR}/prueba_modulo_teclado.err" $(SILENT) -c ${MP_AS} $(MP_EXTRA_AS_PRE) -d__DEBUG -d__MPLAB_DEBUGGER_SIMULATOR=1 -q -p$(MP_PROCESSOR_OPTION)  -l\"${OBJECTDIR}/prueba_modulo_teclado.lst\" -e\"${OBJECTDIR}/prueba_modulo_teclado.err\" $(ASM_OPTIONS)    -o\"${OBJECTDIR}/prueba_modulo_teclado.o\" \"prueba_modulo_teclado.asm\" 
+	@${DEP_GEN} -d "${OBJECTDIR}/prueba_modulo_teclado.o"
+	@${FIXDEPS} "${OBJECTDIR}/prueba_modulo_teclado.o.d" $(SILENT) -rsi ${MP_AS_DIR} -c18 
 	
 else
-${OBJECTDIR}/TPFinal.o: TPFinal.asm  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/prueba_modulo_teclado.o: prueba_modulo_teclado.asm  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/TPFinal.o.d 
-	@${RM} ${OBJECTDIR}/TPFinal.o 
-	@${FIXDEPS} dummy.d -e "${OBJECTDIR}/TPFinal.err" $(SILENT) -c ${MP_AS} $(MP_EXTRA_AS_PRE) -q -p$(MP_PROCESSOR_OPTION)  -l\"${OBJECTDIR}/TPFinal.lst\" -e\"${OBJECTDIR}/TPFinal.err\" $(ASM_OPTIONS)    -o\"${OBJECTDIR}/TPFinal.o\" \"TPFinal.asm\" 
-	@${DEP_GEN} -d "${OBJECTDIR}/TPFinal.o"
-	@${FIXDEPS} "${OBJECTDIR}/TPFinal.o.d" $(SILENT) -rsi ${MP_AS_DIR} -c18 
+	@${RM} ${OBJECTDIR}/prueba_modulo_teclado.o.d 
+	@${RM} ${OBJECTDIR}/prueba_modulo_teclado.o 
+	@${FIXDEPS} dummy.d -e "${OBJECTDIR}/prueba_modulo_teclado.err" $(SILENT) -c ${MP_AS} $(MP_EXTRA_AS_PRE) -q -p$(MP_PROCESSOR_OPTION)  -l\"${OBJECTDIR}/prueba_modulo_teclado.lst\" -e\"${OBJECTDIR}/prueba_modulo_teclado.err\" $(ASM_OPTIONS)    -o\"${OBJECTDIR}/prueba_modulo_teclado.o\" \"prueba_modulo_teclado.asm\" 
+	@${DEP_GEN} -d "${OBJECTDIR}/prueba_modulo_teclado.o"
+	@${FIXDEPS} "${OBJECTDIR}/prueba_modulo_teclado.o.d" $(SILENT) -rsi ${MP_AS_DIR} -c18 
 	
 endif
 
