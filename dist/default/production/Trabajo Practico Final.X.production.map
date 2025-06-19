@@ -1,5 +1,5 @@
 MPLINK 5.09, LINKER
-Linker Map File - Created Thu Jun 19 14:25:11 2025
+Linker Map File - Created Thu Jun 19 14:26:38 2025
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
@@ -7,8 +7,8 @@ Linker Map File - Created Thu Jun 19 14:25:11 2025
                    .org_0       code   0x000000    program   0x000002
                    .cinit    romdata   0x000001    program   0x000004
                    .org_1       code   0x000004    program   0x000002
-                   .org_2       code   0x000005    program   0x00020a
-.config_2007_BUILD/DEFAULT/PRODUCTION/PRUEBA_       code   0x002007    program   0x000002
+                   .org_2       code   0x000005    program   0x000300
+.config_2007_BUILD/DEFAULT/PRODUCTION/TPFINAL       code   0x002007    program   0x000002
 
 
 
@@ -16,76 +16,100 @@ Linker Map File - Created Thu Jun 19 14:25:11 2025
                                Start         End      
                            ---------   ---------      
                             0x000000    0x000002      
-                            0x000004    0x000109      
+                            0x000004    0x000184      
                             0x002007    0x002007      
-            266 out of 8455 program addresses used, program memory utilization is 3%
+            389 out of 8455 program addresses used, program memory utilization is 4%
 
 
 
                               Symbols - Sorted by Name
                      Name    Address   Location    Storage File                     
                 ---------  ---------  ---------  --------- ---------                
-                    ADD_C   0x00004a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                    ADD_D   0x00004c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                    ADD_U   0x00004e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-           CAMBIAR_ALARMA   0x0000d0    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-             CAMBIAR_DSPL   0x0000cd    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-             CAMBIAR_FILA   0x00009c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_C   0x0000c1    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_D   0x0000c5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_U   0x0000c9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY1   0x000070    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY2   0x000072    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY3   0x000074    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                 DELAY5ms   0x00006c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          DESCOMP_VAL_ADC   0x00002d    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          FIN_ISR_TECLADO   0x0000d3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   INICIO   0x000005    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                      ISR   0x000100    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-              ISR_TECLADO   0x000086    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          MOSTRAR_TECLADO   0x0000e5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                  REFRESH   0x000028    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-         SHOW_ADC_DISPLAY   0x000050    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-               TABLA_DSPL   0x00007b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-            TABLA_TECLADO   0x0000d7    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-               TECLA_PRES   0x0000a3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_C   0x000035    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                 TEST_COL   0x000092    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_D   0x00003c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_U   0x000043    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
+           ACTIVAR_ALARMA   0x000069    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_C   0x00008f    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_D   0x000091    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_U   0x000093    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+           CAMBIAR_ALARMA   0x00012d    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CAMBIAR_DSPL   0x00012a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CAMBIAR_FILA   0x0000f9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_C   0x00011e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_D   0x000122    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_U   0x000126    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CHECK_ALARMA   0x000057    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY1   0x0000b5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY2   0x0000b7    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY3   0x0000b9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 DELAY5ms   0x0000b1    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+        DESACTIVAR_ALARMA   0x000067    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          DESCOMP_VAL_ADC   0x000072    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              ENVIAR_INFO   0x0000cb    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              FIN_ISR_ADC   0x000170    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          FIN_ISR_TECLADO   0x000130    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   INICIO   0x000005    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                      ISR   0x000179    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  ISR_ADC   0x000169    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              ISR_TECLADO   0x0000e3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          MOSTRAR_TECLADO   0x000140    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 READ_ADC   0x00015b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+           RECARGA_D1TMR0   0x000176    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  REFRESH   0x00004f    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+         SHOW_ADC_DISPLAY   0x000095    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+               TABLA_DSPL   0x0000c0    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+            TABLA_TECLADO   0x000132    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+               TECLA_PRES   0x000100    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              TEST_ALARMA   0x00006b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_C   0x00007a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 TEST_COL   0x0000ef    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_D   0x000081    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              TEST_DELAY2   0x000172    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_U   0x000088    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  UART_TX   0x0000db    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 WAIT_ADC   0x00015e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
 
 
 
                               Symbols - Sorted by Address
                      Name    Address   Location    Storage File                     
                 ---------  ---------  ---------  --------- ---------                
-                   INICIO   0x000005    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                  REFRESH   0x000028    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          DESCOMP_VAL_ADC   0x00002d    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_C   0x000035    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_D   0x00003c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   TEST_U   0x000043    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                    ADD_C   0x00004a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                    ADD_D   0x00004c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                    ADD_U   0x00004e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-         SHOW_ADC_DISPLAY   0x000050    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                 DELAY5ms   0x00006c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY1   0x000070    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY2   0x000072    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                   DELAY3   0x000074    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-               TABLA_DSPL   0x00007b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-              ISR_TECLADO   0x000086    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                 TEST_COL   0x000092    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-             CAMBIAR_FILA   0x00009c    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-               TECLA_PRES   0x0000a3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_C   0x0000c1    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_D   0x0000c5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          CARGAR_UMBRAL_U   0x0000c9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-             CAMBIAR_DSPL   0x0000cd    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-           CAMBIAR_ALARMA   0x0000d0    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          FIN_ISR_TECLADO   0x0000d3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-            TABLA_TECLADO   0x0000d7    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-          MOSTRAR_TECLADO   0x0000e5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
-                      ISR   0x000100    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\prueba_modulo_teclado.asm
+                   INICIO   0x000005    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  REFRESH   0x00004f    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CHECK_ALARMA   0x000057    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+        DESACTIVAR_ALARMA   0x000067    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+           ACTIVAR_ALARMA   0x000069    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              TEST_ALARMA   0x00006b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          DESCOMP_VAL_ADC   0x000072    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_C   0x00007a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_D   0x000081    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   TEST_U   0x000088    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_C   0x00008f    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_D   0x000091    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                    ADD_U   0x000093    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+         SHOW_ADC_DISPLAY   0x000095    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 DELAY5ms   0x0000b1    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY1   0x0000b5    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY2   0x0000b7    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                   DELAY3   0x0000b9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+               TABLA_DSPL   0x0000c0    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              ENVIAR_INFO   0x0000cb    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  UART_TX   0x0000db    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              ISR_TECLADO   0x0000e3    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 TEST_COL   0x0000ef    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CAMBIAR_FILA   0x0000f9    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+               TECLA_PRES   0x000100    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_C   0x00011e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_D   0x000122    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          CARGAR_UMBRAL_U   0x000126    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+             CAMBIAR_DSPL   0x00012a    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+           CAMBIAR_ALARMA   0x00012d    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          FIN_ISR_TECLADO   0x000130    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+            TABLA_TECLADO   0x000132    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+          MOSTRAR_TECLADO   0x000140    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 READ_ADC   0x00015b    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                 WAIT_ADC   0x00015e    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                  ISR_ADC   0x000169    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              FIN_ISR_ADC   0x000170    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+              TEST_DELAY2   0x000172    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+           RECARGA_D1TMR0   0x000176    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
+                      ISR   0x000179    program     static C:\Users\Julian\MPLABXProjects\Trabajo Practico Final.X\TPFinal.asm
 
 
