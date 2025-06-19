@@ -1,28 +1,11 @@
 ;------------------------------------------------------------
-; PROGRAMA: Medidor de CO - Trabajo Práctico Final Electrónica Digital 2
+; PROGRAMA: Medidor de CO - Prueba del modulo teclado - Trabajo Práctico Final Electrónica Digital 2
 ; ARCHIVO:  TPFinal.asm
 ; AUTORES:  Jerez, Facundo - Krede, Julián - Méndez Quiroga, Celeste Evangelina
 ; FECHA:    19/06/2025
 ; MICROCONTROLADOR: PIC16F887
 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
 ;
-; DESCRIPCIÓN:
-;   - Lee señal analógica de sensor de CO (canal AN7)
-;   - Muestra valor en 4 displays de 7 segmentos:
-;     * Modo normal: Muestra valor actual del ADC
-;     * Modo teclado: Muestra umbral configurado
-;   - Control mediante teclado matricial 4x3:
-;     * Tecla '*' alterna entre modos de visualización
-;     * Tecla '#' activa/desactiva alarma
-;     * Teclas 0-9 configuran umbral de alarma
-;   - Transmisión serial de valores (9600 baudios)
-;   - Alarma visual/sonora cuando se supera umbral
-;
-; CONFIGURACIÓN:
-;   - Oscilador XT
-;   - WDT desactivado
-;   - Master Clear habilitado
-;   - Low Voltage Programming desactivado
 ;------------------------------------------------------------
 		    
 		    LIST P=16F887
@@ -107,67 +90,7 @@ CONF_DISPLAY	    MACRO
     MOVWF	    TRISA        ; RA4-RA7 como entradas (no usadas)
     ENDM
 
-;----------------------------------------------------------------
-; CONFIGURACIÓN DE SALIDA DE ALARMA
-;----------------------------------------------------------------
-; Configura RC0 como salida para controlar la alarma:
-;   - Puede ser un LED, buzzer o relay
-;   - Inicialmente apagada
-;----------------------------------------------------------------
-CONF_ALARMA		    MACRO
-    BANKSEL	    TRISC
-    BCF		    TRISC, 0     ; RC0 como salida
 
-    BANKSEL	    PORTC
-    BCF		    PORTC, 0     ; Apaga la alarma inicialmente
-
-    ENDM
-
-;----------------------------------------------------------------
-; CONFIGURACIÓN DEL MÓDULO ADC
-;----------------------------------------------------------------
-; Configura el ADC para leer el sensor de CO:
-;   - Canal AN7 (RE2) como entrada analógica
-;   - Voltaje de referencia interno (VDD y VSS)
-;   - Justificación a la izquierda (8 bits MSB en ADRESH)
-;   - Frecuencia de reloj Fosc/8
-;   - Inicializa contadores de delay para primera lectura
-;----------------------------------------------------------------
-CONF_ADC		    MACRO
-    BANKSEL	    TRISE
-    BSF		    TRISE, RE2   ; RE2 como entrada (AN7)
-
-    BANKSEL	    ADCON1
-    CLRF	    ADCON1       ; Voltaje referencia VDD/VSS, justificación izquierda
-
-    BANKSEL	    ADCON0
-    MOVLW	    B'01011101'  ; Fosc/8, canal AN7, ADC encendido
-    MOVWF	    ADCON0
-
-    CLRF	    DELAY1TMR0   ; Inicializa contadores para
-    CLRF	    DELAY2TMR0   ; primera lectura del ADC
-
-    ENDM
-
-;----------------------------------------------------------------
-; CONFIGURACIÓN DEL TIMER0
-;----------------------------------------------------------------
-; Configura Timer0 para generar interrupciones periódicas:
-;   - Reloj interno (Fosc/4)
-;   - Prescaler 1:256
-;   - Valor inicial 61 para interrupciones cada ~50ms
-;   (Considerando oscilador de 4MHz: 256*(256-61)*1?s ? 50ms)
-;----------------------------------------------------------------
-CONF_TIMER0		     MACRO
-    BANKSEL	    OPTION_REG
-    MOVLW	    B'01010111'  ; Internal clock, prescaler 1:256 asignado a TMR0
-    MOVWF	    OPTION_REG
-
-    BANKSEL	    TMR0
-    MOVLW	    .61          ; Valor inicial para ~50ms (ajustar según Fosc)
-    MOVWF	    TMR0
-
-    ENDM
 ;----------------------------------------------------------------
 ; CONFIGURACIÓN DE INTERRUPCIONES
 ;----------------------------------------------------------------
@@ -186,31 +109,6 @@ CONF_INTERRUPCION	    MACRO
 
     ENDM
 
-;----------------------------------------------------------------
-; CONFIGURACIÓN DE COMUNICACIÓN SERIAL (UART)
-;----------------------------------------------------------------
-; Configura el módulo EUSART para transmisión serial:
-;   - Baud rate 9600 (para 4MHz y BRGH=1)
-;   - Solo transmisión (no recepción)
-;   - 8 bits de datos, sin paridad
-;----------------------------------------------------------------
-CONF_COMUNICACION	    MACRO
-    BANKSEL	    TXSTA
-    MOVLW	    B'00100100'  ; BRGH=1 (alta velocidad), TXEN=1 (habilitar TX)
-    MOVWF	    TXSTA
-
-    MOVLW	    .25          ; SPBRG = 25 para 9600 bauds (4MHz, BRGH=1)
-    MOVWF	    SPBRG
-
-    BANKSEL	    RCSTA
-    MOVLW	    B'10010000'  ; puerto serial habilitado, 8-bit recepcion
-    MOVWF	    RCSTA
-
-    BANKSEL	    BAUDCTL
-    BCF		    BAUDCTL, 3   ; BAUD Generator = 8 bits
-
-    ENDM
-	
 ;-------------------------
 ; Código principal
 ;-------------------------
@@ -225,11 +123,8 @@ CONF_COMUNICACION	    MACRO
 INICIO		    ;INICIO PROGRAMA
 		    CONF_TECLADO
 		    CONF_DISPLAY
-		    CONF_ALARMA
-		    CONF_ADC
-		    CONF_TIMER0
-		    CONF_COMUNICACION
 		    CONF_INTERRUPCION
+		    CLRF	    VAL_ADC	   ; Inicializa el valor del adc en 0 para contrastar
 		    CLRF	    OPCIONES       ; Inicializar todas las opciones a 0
 		    MOVLW	    .1             ; Valor por defecto para umbral (100)
 		    MOVWF	    VAL_UMBRAL_C
@@ -241,58 +136,8 @@ REFRESH		    BTFSC	    OPCIONES, 0
 		    CALL	    MOSTRAR_TECLADO
 		    BTFSS	    OPCIONES, 0
 		    CALL	    SHOW_ADC_DISPLAY
-		    BTFSC	    OPCIONES, 1
-		    CALL	    CHECK_ALARMA
-		    CALL	    TEST_ALARMA
 		    GOTO	    REFRESH
 		    
-;--------------------------
-; Subrutinas de la alarma
-;--------------------------
-;----------------------------------------------------------
-; DESCOMP_VAL_ADC: Verifica que el valor del adc sea menor
-;		   que el del valor umbral, y en base a eso
-;		   edita el registro
-;----------------------------------------------------------
-CHECK_ALARMA
-		    MOVF	    VAL_UMBRAL_C, W
-		    SUBWF	    VAL_ADC_C, W      ; VAL_ADC_C - VAL_UMBRAL_C
-		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_C < VAL_UMBRAL_C)
-		    GOTO	    ACTIVAR_ALARMA    ; Centena ADC menor que umbral -> Activar
-
-		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_C = VAL_UMBRAL_C)
-		    GOTO	    DESACTIVAR_ALARMA ; Centena ADC mayor que umbral -> Desactivar
-
-		    ; Si centenas iguales, comparar DECENAS
-		    MOVF	    VAL_UMBRAL_D, W
-		    SUBWF	    VAL_ADC_D, W      ; VAL_ADC_D - VAL_UMBRAL_D
-		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_D < VAL_UMBRAL_D)
-		    GOTO	    ACTIVAR_ALARMA    ; Decena ADC menor que umbral -> Activar
-
-		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
-		    GOTO	    DESACTIVAR_ALARMA ; Decena ADC mayor que umbral -> Desactivar
-
-		    ; Si decenas iguales, comparar UNIDADES
-		    MOVF	    VAL_UMBRAL_U, W
-		    SUBWF	    VAL_ADC_U, W      ; VAL_ADC_U - VAL_UMBRAL_U
-		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_U < VAL_UMBRAL_U)
-		    GOTO	    ACTIVAR_ALARMA    ; Unidad ADC menor que umbral -> Activar
-
-		    ; Si llegamos aquí, VAL_ADC >= VAL_UMBRAL
-DESACTIVAR_ALARMA   BCF		    OPCIONES, 1       ; Limpiar bit de estado de alarma
-		    RETURN
-
-ACTIVAR_ALARMA	    BSF		    OPCIONES, 1       ; Setear bit de estado de alarma
-		    RETURN
-
-TEST_ALARMA	    
-		    BANKSEL	    PORTC
-		    BTFSC	    OPCIONES, 1
-		    BSF		    PORTC, 0
-		    BTFSS	    OPCIONES, 1
-		    BCF		    PORTC, 0
-
-		    RETURN
 		    
 ;-------------------------- 
 ; Subrutinas del display
@@ -409,41 +254,6 @@ TABLA_DSPL	    ADDWF	    PCL, F
 		    RETLW	    0X67	    ;9   
 
 		    
-		    
-		    
-		    
-;------------------------------------
-; Subrutinas de comunicacion serial
-;------------------------------------
-		    ;REALIZA EL ENVIO DEL VALOR OBTENIDO DEL ADC CODIFICADO EN CODIGO ASCII. ESTA FUNCION DEBE SER LLAMADA UNICAMENTE EN GET_ADC
-ENVIAR_INFO	    MOVF	    VAL_ADC_C, W
-		    ADDLW	    .48
-		    CALL	    UART_TX	    ;ENVIA CENTENA
-		    MOVF	    VAL_ADC_D, W
-		    
-		    ADDLW	    .48
-		    CALL	    UART_TX	    ;ENVIA DECENA
-		    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
-		    MOVF	    VAL_ADC_U, W
-		    
-		    ADDLW	    .48
-		    CALL	    UART_TX	    ;ENVIA UNIDAD
-		    MOVLW	    .10
-		    CALL	    UART_TX	    ;SALTO DE LINEA
-		    MOVLW	    .13
-		    CALL	    UART_TX	    ;RETORNO DE CARRO
-		    RETURN
-		    
-		    
-UART_TX		    
-		    BANKSEL	    TXSTA
-		    BTFSS	    TXSTA, TRMT	    ;VERIFICA QUE EL TSR ESTE VACIO
-		    GOTO	    UART_TX
-		    BANKSEL	    TXREG
-		    MOVWF	    TXREG	    ;LUEGO DE ESTO SE ENVIA SOLO... EN TEORIA
-		    RETURN
-	    
 ;-------------------------
 ; Subrutinas del teclado
 ;-------------------------
@@ -632,56 +442,6 @@ MOSTRAR_TECLADO
 		    
 		    RETURN
 		 
-		    
-;-------------------------
-; Subrutinas del ADC
-;-------------------------	    
-		    ;REALIZA LA CONVERSION DE LA SEÑAL ANALOGICA A DIGITAL Y GUARDA EL VALOR EN UNA VARIABLE TEMPORAL VAL_ADC
-READ_ADC	    
-		    BANKSEL	    ADCON0
-		    BSF		    ADCON0, 1	    ;INICIALIZA LA CONVERSION
-WAIT_ADC	    BTFSC	    ADCON0, 1
-		    GOTO	    WAIT_ADC	    ;ESPERA A LA FINALIZACION DE LA CONVERSION
-		    MOVF	    ADRESH, W
-		    MOVWF	    VAL_ADC	    ;MUEVO EL VALOR OBTENIDO POR EL ADC ALMACENADO EN VAL_ADC
-		    CALL	    DESCOMP_VAL_ADC ;DESCOMPONE EL VALOR DEL VAL_ADC EN CENTENA, DECENA Y UNIDAD
-		    CALL	    ENVIAR_INFO	    ;ENVIA EL DATO OBTENIDO DEL ADC MEDIANTE TRANSMISION SERIE
-		    
-		    ;RECARGA LOS VALORES PARA DELAY_ADC
-		    MOVLW	    .255
-		    MOVWF	    DELAY1TMR0
-		    MOVLW	    .5
-		    MOVWF	    DELAY2TMR0
-		    
-		    RETURN
-		    
-	    
-		    ;JUNTO CON EL TMR0, REALIZA UN DELAY DE 255*5*50ms = 63.75s
-ISR_ADC		    
-		    BANKSEL	    ADCON0
-		    MOVLW	    .61
-		    MOVWF	    TMR0	    ;RECARGO EL TMR0 CON 61
-		    DECFSZ	    DELAY1TMR0, F
-		    GOTO	    FIN_ISR_ADC	    
-		    GOTO	    TEST_DELAY2	    ;SI DELAY1TMR0 LLEGO A 0 VA A CHECKEA DELAY2TMR0 
-
-FIN_ISR_ADC	   
-		    BCF		    INTCON, T0IF    ;LIMPIA LA BANDERA
-		    RETURN  
-		    
-		    ;SUBRUTINAS COMPLEMENTARIAS DE ISR_ADC
-TEST_DELAY2	    
-		    DECFSZ	    DELAY2TMR0, F
-		    GOTO	    RECARGA_D1TMR0  ;SI DELAY2TMR0 NO LLEGO A 0 RECARGA DELAY1TMR0 Y SE VA A FIN_ISR_ADC
-		    CALL	    READ_ADC	    ;SI DELAY1TMR0 LLEGO A 0 VA A LA SUBRUTINA QUE HACE LA CONVERSION, RECARGA DELAY1TMR0 Y DELAY2TMR0 
-		    GOTO	    FIN_ISR_ADC	    ;LUEGO DE HACER LA CONVERSION SE VA A FIN_ISR_ADC
-
-RECARGA_D1TMR0	    
-		    MOVLW	    .255
-		    MOVWF	    DELAY1TMR0
-		    GOTO	    FIN_ISR_ADC
-		    
-		    
 
 ;-------------------------
 ; Servicio de interrupcion
@@ -695,8 +455,6 @@ ISR
 		    ;INICIO ISR			FUENTES DE INTERRUPCION: PUERTO B(TECLADO), TIMER0(ADC)
 		    BTFSC	    INTCON, RBIF
 		    CALL	    ISR_TECLADO
-		    BTFSC	    INTCON, T0IF
-		    CALL	    ISR_ADC
 		    ;RECUPERACION DE CONTEXTO
 		    SWAPF	    STATUS_TEMP, W
 		    MOVWF	    STATUS

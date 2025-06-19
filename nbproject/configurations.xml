@@ -13,6 +13,11 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>TPFinal.asm</itemPath>
+      <itemPath>prueba_modulo_display.asm</itemPath>
+      <itemPath>prueba_modulo_adc.asm</itemPath>
+      <itemPath>prueba_modulo_teclado.asm</itemPath>
+      <itemPath>prueba_modulo_alarma.asm</itemPath>
+      <itemPath>prueba_modulo_comunicacion.asm</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -483,6 +488,16 @@
         <property key="extended-mode-mpasm" value="false"/>
         <property key="extended-mode-mplink" value="false"/>
       </mpasmsuite>
+      <item path="prueba_modulo_adc.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_alarma.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_comunicacion.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_display.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_teclado.asm" ex="true" overriding="false">
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>
