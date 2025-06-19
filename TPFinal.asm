@@ -260,41 +260,49 @@ CHECK_ALARMA
 		    MOVF	    VAL_UMBRAL_C, W
 		    SUBWF	    VAL_ADC_C, W      ; VAL_ADC_C - VAL_UMBRAL_C
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_C < VAL_UMBRAL_C)
-		    GOTO	    ACTIVAR_ALARMA    ; Centena ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Centena ADC menor que umbral -> Activar
 
 		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_C = VAL_UMBRAL_C)
-		    GOTO	    DESACTIVAR_ALARMA ; Centena ADC mayor que umbral -> Desactivar
+		    GOTO	    ALARMA_OFF	      ; Centena ADC mayor que umbral -> Desactivar
 
 		    ; Si centenas iguales, comparar DECENAS
 		    MOVF	    VAL_UMBRAL_D, W
 		    SUBWF	    VAL_ADC_D, W      ; VAL_ADC_D - VAL_UMBRAL_D
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_D < VAL_UMBRAL_D)
-		    GOTO	    ACTIVAR_ALARMA    ; Decena ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Decena ADC menor que umbral -> Activar
 
 		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
-		    GOTO	    DESACTIVAR_ALARMA ; Decena ADC mayor que umbral -> Desactivar
+		    GOTO	    ALARMA_OFF	      ; Decena ADC mayor que umbral -> Desactivar
 
 		    ; Si decenas iguales, comparar UNIDADES
 		    MOVF	    VAL_UMBRAL_U, W
 		    SUBWF	    VAL_ADC_U, W      ; VAL_ADC_U - VAL_UMBRAL_U
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_U < VAL_UMBRAL_U)
-		    GOTO	    ACTIVAR_ALARMA    ; Unidad ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Unidad ADC menor que umbral -> Activar
 
 		    ; Si llegamos aquí, VAL_ADC >= VAL_UMBRAL
-DESACTIVAR_ALARMA   BCF		    OPCIONES, 1       ; Limpiar bit de estado de alarma
+ALARMA_ON	    BSF		    OPCIONES, 1       ; Setear bit de estado de alarma
 		    RETURN
 
-ACTIVAR_ALARMA	    BSF		    OPCIONES, 1       ; Setear bit de estado de alarma
+ALARMA_OFF	    BCF		    OPCIONES, 1       ; Limpiar bit de estado de alarma
+							
 		    RETURN
-
+		    
+; Togglea entre alarma activada y desactivada
 TEST_ALARMA	    
 		    BANKSEL	    PORTC
-		    BTFSC	    OPCIONES, 1
+		    BTFSC	    OPCIONES, 2
+		    CALL   	    VERIFICAR_ALARMA
+		    BTFSS	    OPCIONES, 2
+		    BCF		    PORTC, 0
+		    RETURN
+		    
+VERIFICAR_ALARMA    BTFSC	    OPCIONES, 1
 		    BSF		    PORTC, 0
 		    BTFSS	    OPCIONES, 1
 		    BCF		    PORTC, 0
-
 		    RETURN
+		    
 		    
 ;-------------------------- 
 ; Subrutinas del display
@@ -591,7 +599,7 @@ CAMBIAR_DSPL
 ;   Control físico en RC0
 ;-----------------------------------------
 CAMBIAR_ALARMA	    
-		    MOVLW	    B'00000010'	    
+		    MOVLW	    B'00000100'	    
 		    XORWF	    OPCIONES, F    
 		    GOTO	    FIN_ISR_TECLADO
 		    		    

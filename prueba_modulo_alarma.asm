@@ -40,6 +40,7 @@ TECLA_ACTIVA  EQU   0x76    ; Tecla actualmente presionada
 OPCIONES      EQU   0x77    ; Registro de opciones:
 			     ;   BIT 0: Modo display (0=ADC, 1=Teclado)
 			     ;   BIT 1: Estado alarma (0=OFF, 1=ON)
+			     ;	 BIT 2: Activar/Desactivar Alarma (0=OFF, 1=ON)
 DELAY1TMR0    EQU   0x78    ; Contador delay para ADC (primer nivel)
 DELAY2TMR0    EQU   0x79    ; Contador delay para ADC (segundo nivel)
 W_TEMP        EQU   0x7A    ; Backup de W durante ISR
@@ -155,18 +156,17 @@ INICIO		    ;INICIO PROGRAMA
 		    BSF	    	    OPCIONES, 1    ; INICIALIZA LA ALARMA ACTIVADA
 		    MOVLW	    .0	           ; VALOR MENOR AL VAL ADC PARA QUE NO SUENE
 		    MOVWF	    VAL_UMBRAL_C
-		    MOVLW	    .2	           
+		    MOVLW	    .7	           
 		    MOVWF	    VAL_UMBRAL_D
 		    MOVLW	    .5	           
 		    MOVWF	    VAL_UMBRAL_U
-		    CALL
 		    
 REFRESH		    BTFSC	    OPCIONES, 0
 		    CALL	    MOSTRAR_TECLADO
 		    BTFSS	    OPCIONES, 0
 		    CALL	    SHOW_ADC_DISPLAY
-		    BTFSC	    OPCIONES, 1
 		    CALL	    CHECK_ALARMA
+		    
 		    CALL	    TEST_ALARMA
 		    GOTO	    REFRESH
 		    
@@ -182,40 +182,47 @@ CHECK_ALARMA
 		    MOVF	    VAL_UMBRAL_C, W
 		    SUBWF	    VAL_ADC_C, W      ; VAL_ADC_C - VAL_UMBRAL_C
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_C < VAL_UMBRAL_C)
-		    GOTO	    ACTIVAR_ALARMA    ; Centena ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Centena ADC menor que umbral -> Activar
 
 		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_C = VAL_UMBRAL_C)
-		    GOTO	    DESACTIVAR_ALARMA ; Centena ADC mayor que umbral -> Desactivar
+		    GOTO	    ALARMA_OFF	      ; Centena ADC mayor que umbral -> Desactivar
 
 		    ; Si centenas iguales, comparar DECENAS
 		    MOVF	    VAL_UMBRAL_D, W
 		    SUBWF	    VAL_ADC_D, W      ; VAL_ADC_D - VAL_UMBRAL_D
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_D < VAL_UMBRAL_D)
-		    GOTO	    ACTIVAR_ALARMA    ; Decena ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Decena ADC menor que umbral -> Activar
 
 		    BTFSS	    STATUS, Z         ; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
-		    GOTO	    DESACTIVAR_ALARMA ; Decena ADC mayor que umbral -> Desactivar
+		    GOTO	    ALARMA_OFF	      ; Decena ADC mayor que umbral -> Desactivar
 
 		    ; Si decenas iguales, comparar UNIDADES
 		    MOVF	    VAL_UMBRAL_U, W
 		    SUBWF	    VAL_ADC_U, W      ; VAL_ADC_U - VAL_UMBRAL_U
 		    BTFSS	    STATUS, C         ; Si C=0 (VAL_ADC_U < VAL_UMBRAL_U)
-		    GOTO	    ACTIVAR_ALARMA    ; Unidad ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_ON	      ; Unidad ADC menor que umbral -> Activar
 
 		    ; Si llegamos aquí, VAL_ADC >= VAL_UMBRAL
-DESACTIVAR_ALARMA   BCF		    OPCIONES, 1       ; Limpiar bit de estado de alarma
+ALARMA_ON	    BSF		    OPCIONES, 1       ; Setear bit de estado de alarma
 		    RETURN
 
-ACTIVAR_ALARMA	    BSF		    OPCIONES, 1       ; Setear bit de estado de alarma
+ALARMA_OFF	    BCF		    OPCIONES, 1       ; Limpiar bit de estado de alarma
+							
 		    RETURN
 		    
+; Togglea entre alarma activada y desactivada
 TEST_ALARMA	    
 		    BANKSEL	    PORTC
-		    BTFSC	    OPCIONES, 1
+		    BTFSC	    OPCIONES, 2
+		    CALL   	    VERIFICAR_ALARMA
+		    BTFSS	    OPCIONES, 2
+		    BCF		    PORTC, 0
+		    RETURN
+		    
+VERIFICAR_ALARMA    BTFSC	    OPCIONES, 1
 		    BSF		    PORTC, 0
 		    BTFSS	    OPCIONES, 1
 		    BCF		    PORTC, 0
-
 		    RETURN
 		    
 ;-------------------------- 
@@ -232,7 +239,7 @@ TEST_ALARMA
 ;----------------------------------------------------------
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
@@ -242,18 +249,27 @@ DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    
 TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_C
+		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_D 
 		    
 TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_D
+		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_U
 		    
 TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_U
+		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    
 		    RETURN	
 
 ADD_C		    INCF	    VAL_ADC_C, F
@@ -470,11 +486,13 @@ CAMBIAR_DSPL
 ;   Control físico en RC0
 ;-----------------------------------------
 CAMBIAR_ALARMA	    
-		    MOVLW	    B'00000010'	    
+		    MOVLW	    B'00000100'	    
 		    XORWF	    OPCIONES, F    
 		    GOTO	    FIN_ISR_TECLADO
 		    		    
 FIN_ISR_TECLADO	    
+		    MOVLW	    B'00001111'
+		    MOVWF	    PORTB
 		    BCF		    INTCON, RBIF
 		    RETURN  
 		    
@@ -528,7 +546,6 @@ MOSTRAR_TECLADO
 		    CALL	    DELAY5ms
 		    
 		    RETURN
-		 
 
 
 ;-------------------------
