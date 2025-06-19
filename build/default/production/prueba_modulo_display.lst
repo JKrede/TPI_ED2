@@ -1,0 +1,878 @@
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;------------------------------------------------------------
+                      00002 ; PROGRAMA: Medidor de CO - Prueba del modulo display - Trabajo Práctico Final Electrónica Digital 2
+                      00003 ; ARCHIVO:  TPFinal.asm
+                      00004 ; AUTORES:  Jerez, Facundo - Krede, Julián - Méndez Quiroga, Celeste Evangelina
+                      00005 ; FECHA:    19/06/2025
+                      00006 ; MICROCONTROLADOR: PIC16F887
+                      00007 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
+                      00008 ;
+                      00009 ;------------------------------------------------------------
+                      00010 
+                      00011 ;-------------------------------------------------------------------    
+                      00012 ; PRUEBA: VERIFICA QUE SE MUESTRE CORRECTAMENTE EL VALOR 0084 EN EL
+                      00013 ;       DISPLAY DE 7 SEGMENTOS.
+                      00014 ;-------------------------------------------------------------------
+                      00015     
+                      00016                     
+                      00017                     LIST P=16F887
+                      00018                     #INCLUDE "P16F887.INC"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Jul 23 2018
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2018 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00019         
+2007   2FF1           00020                     __CONFIG _CONFIG1, _XT_OSC & _WDTE_OFF & _MCLRE_ON & _LVP_OFF
+                      00021 
+                      00022                     
+                      00023 ;-------------------------
+                      00024 ; VARIABLES DEL SISTEMA
+                      00025 ;-------------------------
+                      00026                     
+                      00027 ; Variables en banco 0 (0x20-0x6F)
+  00000020            00028 DELAY1DSPL    EQU   0x20    ; Contador delay para displays (primer nivel)
+  00000021            00029 DELAY2DSPL    EQU   0x21    ; Contador delay para displays (segundo nivel)
+  00000022            00030 DELAY3DSPL    EQU   0x22    ; Contador delay para displays (tercer nivel)
+  00000023            00031 TEMP_VAL_ADC  EQU   0x23    ; Valor temporal del ADC para realizar la descomposicion
+                      00032 
+                      00033 ; Variables en banco común (0x70-0x7F)
+  00000070            00034 VAL_ADC       EQU   0x70    ; Valor crudo del ADC (0-255)
+  0000007C            00035 VAL_ADC_U     EQU   0x7C    ; Unidades del valor ADC (0-9)
+  0000007D            00036 VAL_ADC_D     EQU   0x7D    ; Decenas del valor ADC (0-9)
+  0000007E            00037 VAL_ADC_C     EQU   0x7E    ; Centenas del valor ADC (0-9)
+  0000007F            00038 VAL_ADC_M     EQU   0x7F    ; Unidades de mil del valor ADC
+                      00039    
+                      00040    
+                      00041 ;----------------------------------------------------------------
+                      00042 ; CONFIGURACIÓN DE DISPLAYS 7 SEGMENTOS
+                      00043 ;----------------------------------------------------------------
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00044 ; Configura los puertos para controlar 4 displays de 7 segmentos:
+                      00045 ;   - PORTD como salida (segmentos a-g)
+                      00046 ;   - RA0-RA3 como salidas (control de displays)
+                      00047 ;   - Configura AN7 como entrada analógica para el sensor
+                      00048 ;----------------------------------------------------------------
+                      00049 CONF_DISPLAY        MACRO
+                      00050     BANKSEL         ANSEL
+                      00051     MOVLW           B'10000000'  ; AN7 como analógico, demás pines como digital
+                      00052     MOVWF           ANSEL
+                      00053 
+                      00054     BANKSEL         TRISD
+                      00055     CLRF            TRISD        ; PORTD completo como salida (segmentos)
+                      00056 
+                      00057     MOVLW           B'11110000'  ; RA0-RA3 como salidas (control displays)
+                      00058     MOVWF           TRISA        ; RA4-RA7 como entradas (no usadas)
+                      00059     ENDM
+                      00060 
+                      00061 ;-------------------------
+                      00062 ; Código principal
+                      00063 ;-------------------------
+                      00064                     ORG             0X00
+0000   2???           00065                     GOTO            INICIO
+                      00066                     
+                      00067                     ORG             0X05
+                      00068 
+0005                  00069 INICIO              ;INICIO PROGRAMA
+                      00070                         
+                      00071                     CONF_DISPLAY
+0005   1683 1703          M     BANKSEL         ANSEL
+0007   3080               M     MOVLW           B'10000000'  ; AN7 como analógico, demás pines como digital
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0008   0088               M     MOVWF           ANSEL
+                          M 
+0009   1683 1303          M     BANKSEL         TRISD
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000B   0188               M     CLRF            TRISD        ; PORTD completo como salida (segmentos)
+                          M 
+000C   30F0               M     MOVLW           B'11110000'  ; RA0-RA3 como salidas (control displays)
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000D   0085               M     MOVWF           TRISA        ; RA4-RA7 como entradas (no usadas)
+                      00072 
+000E   3054           00073                     MOVLW           .84            ; numero a mostrar
+000F   00F0           00074                     MOVWF           VAL_ADC
+0010                  00075 REFRESH             
+0010   2???           00076                     CALL            SHOW_ADC_DISPLAY
+0011   2???           00077                     GOTO            REFRESH
+                      00078                     
+                      00079 
+                      00080 ;-------------------------- 
+                      00081 ; Subrutinas del display
+                      00082 ;--------------------------
+                      00083 ;----------------------------------------------------------
+                      00084 ; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00085 ;   Entrada: VAL_ADC (valor a descomponer)
+                      00086 ;   Salida:  VAL_ADC_U (unidades)
+                      00087 ;            VAL_ADC_D (decenas)
+                      00088 ;            VAL_ADC_C (centenas)
+                      00089 ;            VAL_ADC_M (unidades de mil, siempre 0)
+                      00090 ;   Altera:  W, STATUS
+                      00091 ;----------------------------------------------------------
+                      00092 
+0012   1283           00093 DESCOMP_VAL_ADC     BCF             STATUS, RP0
+0013   1303           00094                     BCF             STATUS, RP1
+0014   3000           00095                     MOVLW           .0              ;TEMPORAL
+0015   00FF           00096                     MOVWF           VAL_ADC_M       ;TEMPORAL
+0016   0870           00097                     MOVF            VAL_ADC, W
+0017   00A3           00098                     MOVWF           TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
+0018   01FC           00099                     CLRF            VAL_ADC_U       ;UNIDAD DEL VALOR A MOSTRAR
+0019   01FD           00100                     CLRF            VAL_ADC_D       ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
+001A   01FE           00101                     CLRF            VAL_ADC_C       ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
+001B   01FF           00102                     CLRF            VAL_ADC_M       ;NUNCA VALE DISTINTO DE CERO
+                      00103                     
+001C   3064           00104 TEST_C              MOVLW           .100            ;CALCULA LA CENTENA
+001D   02A3           00105                     SUBWF           TEMP_VAL_ADC, F
+001E   1803           00106                     BTFSC           STATUS,C
+001F   2???           00107                     GOTO            ADD_C
+                      00108                     
+0020   300A           00109 TEST_D              MOVLW           .10             ;CALCULA LA DECENA
+0021   02A3           00110                     SUBWF           TEMP_VAL_ADC, F
+0022   1803           00111                     BTFSC           STATUS,C
+0023   2???           00112                     GOTO            ADD_D
+                      00113                     
+0024   3001           00114 TEST_U              MOVLW           .1              ;CALCULA LA UNIDAD
+0025   02A3           00115                     SUBWF           TEMP_VAL_ADC, F
+0026   1803           00116                     BTFSC           STATUS,C
+0027   2???           00117                     GOTO            ADD_U
+0028   0008           00118                     RETURN      
+                      00119 
+0029   0AFE           00120 ADD_C               INCF            VAL_ADC_C, F
+002A   2???           00121                     GOTO            TEST_C
+                      00122 
+002B   0AFD           00123 ADD_D               INCF            VAL_ADC_D, F
+002C   2???           00124                     GOTO            TEST_D         
+                      00125 
+002D   0AFC           00126 ADD_U               INCF            VAL_ADC_U, F
+002E   2???           00127                     GOTO            TEST_U
+                      00128         
+                      00129 ;------------------------------------------------
+                      00130 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
+                      00131 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
+                      00132 ;   Requiere: TABLA_DSPL inicializada
+                      00133 ;   Tiempo: ~20ms (4 displays * 5ms)
+                      00134 ;------------------------------------------------
+002F   2???           00135 SHOW_ADC_DISPLAY    CALL            DESCOMP_VAL_ADC
+                      00136                     
+0030   1283 1303      00137                     BANKSEL         PORTA           ;BANCO 0
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0032   3001           00138                     MOVLW           B'00000001'
+0033   0085           00139                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
+0034   087C           00140                     MOVF            VAL_ADC_U, W
+0035   2???           00141                     CALL            TABLA_DSPL      
+0036   0088           00142                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+0037   2???           00143                     CALL            DELAY5ms
+                      00144                     
+0038   3002           00145                     MOVLW           B'00000010'
+0039   0085           00146                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
+003A   087D           00147                     MOVF            VAL_ADC_D, W
+003B   2???           00148                     CALL            TABLA_DSPL
+003C   0088           00149                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+003D   2???           00150                     CALL            DELAY5ms
+                      00151                     
+003E   3004           00152                     MOVLW           B'00000100'
+003F   0085           00153                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
+0040   087E           00154                     MOVF            VAL_ADC_C, W
+0041   2???           00155                     CALL            TABLA_DSPL
+0042   0088           00156                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
+                            ORRESPONDIENTE FORMATO
+0043   2???           00157                     CALL            DELAY5ms
+                      00158                     
+0044   3008           00159                     MOVLW           B'00001000'
+0045   0085           00160                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
+0046   087F           00161                     MOVF            VAL_ADC_M, W
+0047   2???           00162                     CALL            TABLA_DSPL
+0048   0088           00163                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CO
+                            N SU CORRESPONDIENTE FORMATO
+0049   2???           00164                     CALL            DELAY5ms
+004A   0008           00165                     RETURN
+                      00166                     
+                      00167                     ;DELAY DE 5ms USADO PARA MOSTRAR VALORES EN DISPLAY (SHOW_DISPLAY)
+004B   1283           00168 DELAY5ms            BCF             STATUS, RP0
+004C   1303           00169                     BCF             STATUS, RP1     ;BANCO 0
+004D   3005           00170                     MOVLW           .5              ;m=5
+004E   00A0           00171                     MOVWF           DELAY1DSPL
+004F   3005           00172 DELAY1              MOVLW           .5              ;n=5
+0050   00A1           00173                     MOVWF           DELAY2DSPL
+0051   3041           00174 DELAY2              MOVLW           .65             ;p=65
+0052   00A2           00175                     MOVWF           DELAY3DSPL
+0053   0BA2           00176 DELAY3              DECFSZ          DELAY3DSPL, F
+0054   2???           00177                     GOTO            DELAY3
+0055   0BA1           00178                     DECFSZ          DELAY2DSPL, F
+0056   2???           00179                     GOTO            DELAY2
+0057   0BA0           00180                     DECFSZ          DELAY1DSPL, F
+0058   2???           00181                     GOTO            DELAY1
+0059   0008           00182                     RETURN
+                      00183                     
+                      00184 
+                      00185                     ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSIT
+                            IVA)
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+005A   0782           00186 TABLA_DSPL          ADDWF           PCL, F
+005B   343F           00187                     RETLW           0X3F            ;0
+005C   3406           00188                     RETLW           0X06            ;1
+005D   345B           00189                     RETLW           0X5B            ;2
+005E   344F           00190                     RETLW           0X4F            ;3
+005F   3466           00191                     RETLW           0X66            ;4
+0060   346D           00192                     RETLW           0X6D            ;5
+0061   347D           00193                     RETLW           0X7D            ;6
+0062   3407           00194                     RETLW           0X07            ;7
+0063   347F           00195                     RETLW           0X7F            ;8
+0064   3467           00196                     RETLW           0X67            ;9   
+                      00197 
+                      00198                     
+                      00199 
+2FF1                  00200                     END
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  6
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ABDEN                             00000000
+ABDOVF                            00000007
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADD_C                             00000029
+ADD_D                             0000002B
+ADD_U                             0000002D
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+BAUDCTL                           00000187
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  7
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHS0                              00000002
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  8
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CKE                               00000006
+CKP                               00000004
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+CONF_DISPLAY                      
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DELAY1                            0000004F
+DELAY1DSPL                        00000020
+DELAY2                            00000051
+DELAY2DSPL                        00000021
+DELAY3                            00000053
+DELAY3DSPL                        00000022
+DELAY5ms                          0000004B
+DESCOMP_VAL_ADC                   00000012
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+F                                 00000001
+FERR                              00000002
+FSR                               00000004
+FVREN                             00000000
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HTS                               00000002
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INICIO                            00000005
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+LTS                               00000001
+MC1OUT                            00000007
+MC2OUT                            00000006
+MSK                               00000093
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PWM1CON                           0000009B
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+REFRESH                           00000010
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SEN                               00000000
+SENDB                             00000003
+SHOW_ADC_DISPLAY                  0000002F
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SWDTEN                            00000000
+SYNC                              00000004
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TABLA_DSPL                        0000005A
+TEMP_VAL_ADC                      00000023
+TEST_C                            0000001C
+TEST_D                            00000020
+TEST_U                            00000024
+TMR0                              00000001
+TMR0IE                            00000005
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+VAL_ADC                           00000070
+VAL_ADC_C                         0000007E
+VAL_ADC_D                         0000007D
+VAL_ADC_M                         0000007F
+VAL_ADC_U                         0000007C
+VCFG0                             00000004
+VCFG1                             00000005
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  11:46:32         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     3 reported,     0 suppressed
+
+

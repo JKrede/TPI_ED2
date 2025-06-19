@@ -7,12 +7,19 @@
 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
 ;
 ;------------------------------------------------------------
+
+;-------------------------------------------------------------------    
+; PRUEBA: VERIFICA QUE SE MUESTRE CORRECTAMENTE EL VALOR 0084 EN EL
+;	DISPLAY DE 7 SEGMENTOS.
+;-------------------------------------------------------------------
+    
 		    
 		    LIST P=16F887
 		    #INCLUDE "P16F887.INC"
 	
 		    __CONFIG _CONFIG1, _XT_OSC & _WDTE_OFF & _MCLRE_ON & _LVP_OFF
-	
+
+		    
 ;-------------------------
 ; VARIABLES DEL SISTEMA
 ;-------------------------
@@ -60,7 +67,7 @@ CONF_DISPLAY	    MACRO
 		    ORG		    0X05
 
 INICIO		    ;INICIO PROGRAMA
-
+			
 		    CONF_DISPLAY
 
 		    MOVLW	    .84		   ; numero a mostrar
@@ -85,6 +92,8 @@ REFRESH
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    BCF		    STATUS, RP1
+		    MOVLW	    .0		    ;TEMPORAL
+		    MOVWF	    VAL_ADC_M	    ;TEMPORAL
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR

@@ -514,7 +514,7 @@
         <mpasmsuite>
         </mpasmsuite>
       </item>
-      <item path="prueba_modulo_display.asm" ex="true" overriding="false">
+      <item path="prueba_modulo_display.asm" ex="false" overriding="false">
         <MPASMWIN-AS>
         </MPASMWIN-AS>
         <MPASMWIN-LD>
@@ -522,7 +522,7 @@
         <mpasmsuite>
         </mpasmsuite>
       </item>
-      <item path="prueba_modulo_teclado.asm" ex="false" overriding="false">
+      <item path="prueba_modulo_teclado.asm" ex="true" overriding="false">
         <MPASMWIN-AS>
         </MPASMWIN-AS>
         <MPASMWIN-LD>

@@ -7,6 +7,13 @@
 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
 ;
 ;------------------------------------------------------------
+
+;-------------------------------------------------------------------------------------------
+; PRUEBA: INICIAR EL SISTEMA Y VERIFICAR LAS MEDICIONES AUTOMATICAS QUE REALIZA EL SENSOR 
+;	EN EL DISPLAY.
+;	SOMETER AL SISTEMA A UN INCREMENTO EN LA CANTIDAD DE MONOXIDO DE CARBONO EN
+;	EL AMBIENTE DURANTE MAS DE 120 SEGUNDOS PARA VERIFICAR QUE ESTA MIDIENDO CORRECTAMENTE.
+;-------------------------------------------------------------------------------------------
 		    
 		    LIST P=16F887
 		    #INCLUDE "P16F887.INC"

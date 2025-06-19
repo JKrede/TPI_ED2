@@ -12,7 +12,15 @@
 		    #INCLUDE "P16F887.INC"
 	
 		    __CONFIG _CONFIG1, _XT_OSC & _WDTE_OFF & _MCLRE_ON & _LVP_OFF
-	
+
+		    
+;-------------------------------------------------------------------------------------
+; PRUEBA: INICIAR EL SISTEMA Y CAMBIAR LOS VALORES DE UMBRAL DE 888D ESTABLECIDOS
+;	POR DEFECTO DENTRO DEL PROGRAMA A 123D MEDIANTE EL TECLADO Y ADEMAS VERIFICAR
+;	EL FUNCIONAMIENTO DE LAS TECLAS ESPECIALES (* Y #)
+;-------------------------------------------------------------------------------------
+		    	    
+		    
 ;-------------------------
 ; VARIABLES DEL SISTEMA
 ;-------------------------
@@ -155,6 +163,8 @@ REFRESH		    BTFSC	    OPCIONES, 0
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    BCF		    STATUS, RP1
+		    MOVLW	    .0		    ;TEMPORAL
+		    MOVWF	    VAL_ADC_M	    ;TEMPORAL
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
@@ -295,10 +305,10 @@ TEST_COL	    INCF	    POS_TECLA, F
 		    BTFSS	    PORTB, RB6	    ;TESTEA COLUMNA3
 		    GOTO	    TECLA_PRES
 		    GOTO	    CAMBIAR_FILA
-		    
+
 CAMBIAR_FILA	    MOVLW	    .12
 		    SUBWF	    POS_TECLA, W
-		    BTFSC	    STATUS,Z
+		    BTFSC	    STATUS, Z
 		    GOTO	    FIN_ISR_TECLADO ;FINALIZA 
 		    BSF		    STATUS, C
 		    RLF		    PORTB, F	    ;MUEVE EL CERO A LA IZQUIERDA
@@ -329,7 +339,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    GOTO	    CAMBIAR_ALARMA
 		
 		    ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
-		    INCF	    N_TECLA
+		    INCF	    N_TECLA, F
 		    MOVLW	    .1
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z

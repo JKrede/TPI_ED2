@@ -7,7 +7,14 @@
 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
 ;
 ;------------------------------------------------------------
+
 		    
+;----------------------------------------------------------------------
+; PRUEBA: INICIAR EL SISTEMA Y ENVIAR MEDIANTE EL MODULO UART EL NUMERO
+;	141D DE MANERA CONTINUA AL PC
+;----------------------------------------------------------------------
+    
+
 		    LIST P=16F887
 		    #INCLUDE "P16F887.INC"
 	
@@ -80,22 +87,22 @@ REFRESH		    CALL	    ENVIAR_INFO
 ;------------------------------------
 ; Subrutinas de comunicacion serial
 ;------------------------------------
-		    ;REALIZA EL ENVIO DEL VALOR OBTENIDO DEL ADC CODIFICADO EN CODIGO ASCII. ESTA FUNCION DEBE SER LLAMADA UNICAMENTE EN GET_ADC
+		    ;REALIZA EL ENVIO DEL VALOR OBTENIDO DEL ADC CODIFICADO EN CODIGO ASCII.
 ENVIAR_INFO	    MOVF	    VAL_ADC_C, W
 		    ADDLW	    .48
 		    CALL	    UART_TX	    ;ENVIA CENTENA
-		    MOVF	    VAL_ADC_D, W
 		    
+		    MOVF	    VAL_ADC_D, W
 		    ADDLW	    .48
 		    CALL	    UART_TX	    ;ENVIA DECENA
-		    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
+
 		    MOVF	    VAL_ADC_U, W
-		    
 		    ADDLW	    .48
 		    CALL	    UART_TX	    ;ENVIA UNIDAD
+		    
 		    MOVLW	    .10
 		    CALL	    UART_TX	    ;SALTO DE LINEA
+		    
 		    MOVLW	    .13
 		    CALL	    UART_TX	    ;RETORNO DE CARRO
 		    RETURN
@@ -106,7 +113,7 @@ UART_TX
 		    BTFSS	    TXSTA, TRMT	    ;VERIFICA QUE EL TSR ESTE VACIO
 		    GOTO	    UART_TX
 		    BANKSEL	    TXREG
-		    MOVWF	    TXREG	    ;LUEGO DE ESTO SE ENVIA SOLO... EN TEORIA
+		    MOVWF	    TXREG	    
 		    RETURN
 	    
 		    END

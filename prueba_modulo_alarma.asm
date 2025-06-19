@@ -7,6 +7,12 @@
 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
 ;
 ;------------------------------------------------------------
+
+;--------------------------------------------------------------------------------------
+; PRUEBA: INICIAR EL SISTEMA CON VAL_ADC = 50D, VALOR UMBRAL = 25D Y LA ALARMA ACTIVADA.
+;	1. MEDIANTE EL TECLADO CAMBIAR EL VALOR UMBRAL A >50 PARA QUE SUENE LA ALARMA.
+;	2. POSTERIORMENTE TOCAR EL BOTON # DEL TECLADO PARA PROBAR LA DESACTIVACION.
+;--------------------------------------------------------------------------------------
 		    
 		    LIST P=16F887
 		    #INCLUDE "P16F887.INC"
@@ -146,11 +152,14 @@ INICIO		    ;INICIO PROGRAMA
 		    
 		    MOVLW	    .50		   ; VALOR A SUPERAR PARA QUE SE ACTIVE LA ALARMA
 		    MOVWF	    VAL_ADC	   ;
-		    BSF	    	    OPCIONES, 1    ; Inicializar todas las opciones a 0
-		    MOVLW	    .1	           ; Valor por defecto para umbral (111)
+		    BSF	    	    OPCIONES, 1    ; INICIALIZA LA ALARMA ACTIVADA
+		    MOVLW	    .0	           ; VALOR MENOR AL VAL ADC PARA QUE NO SUENE
 		    MOVWF	    VAL_UMBRAL_C
+		    MOVLW	    .2	           
 		    MOVWF	    VAL_UMBRAL_D
+		    MOVLW	    .5	           
 		    MOVWF	    VAL_UMBRAL_U
+		    CALL
 		    
 REFRESH		    BTFSC	    OPCIONES, 0
 		    CALL	    MOSTRAR_TECLADO
