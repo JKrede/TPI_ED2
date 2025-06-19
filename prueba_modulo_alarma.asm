@@ -153,7 +153,7 @@ INICIO		    ;INICIO PROGRAMA
 		    
 		    MOVLW	    .50		   ; VALOR A SUPERAR PARA QUE SE ACTIVE LA ALARMA
 		    MOVWF	    VAL_ADC	   ;
-		    BSF	    	    OPCIONES, 1    ; INICIALIZA LA ALARMA ACTIVADA
+		    BSF	    	    OPCIONES, 2    ; INICIALIZA LA ALARMA ACTIVADA
 		    MOVLW	    .0	           ; VALOR MENOR AL VAL ADC PARA QUE NO SUENE
 		    MOVWF	    VAL_UMBRAL_C
 		    MOVLW	    .7	           
@@ -166,7 +166,6 @@ REFRESH		    BTFSC	    OPCIONES, 0
 		    BTFSS	    OPCIONES, 0
 		    CALL	    SHOW_ADC_DISPLAY
 		    CALL	    CHECK_ALARMA
-		    
 		    CALL	    TEST_ALARMA
 		    GOTO	    REFRESH
 		    
