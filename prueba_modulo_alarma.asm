@@ -353,10 +353,16 @@ TABLA_DSPL	    ADDWF	    PCL, F
 ;   Lógica antirrebote incorporada
 ;------------------------------------------------
 ISR_TECLADO	    CLRF	    POS_TECLA
-		    CLRF	    N_TECLA
+		    
 		    CLRF	    TECLA_ACTIVA
+		    
+		    MOVLW	    .3		    ;VERIFICA QUE N_TECLA NO SUPERE 3
+		    SUBWF	    N_TECLA, W
+		    BTFSC	    STATUS,Z
+		    CLRF	    N_TECLA
+		    
 		    BANKSEL	    PORTB
-		    MOVLW	    B'00001110'
+		    MOVLW	    B'11111110'
 		    MOVWF	    PORTB
 		    NOP
 		    GOTO	    TEST_COL
@@ -374,10 +380,10 @@ TEST_COL	    INCF	    POS_TECLA, F
 		    BTFSS	    PORTB, RB6	    ;TESTEA COLUMNA3
 		    GOTO	    TECLA_PRES
 		    GOTO	    CAMBIAR_FILA
-		    
+
 CAMBIAR_FILA	    MOVLW	    .12
 		    SUBWF	    POS_TECLA, W
-		    BTFSC	    STATUS,Z
+		    BTFSC	    STATUS, Z
 		    GOTO	    FIN_ISR_TECLADO ;FINALIZA 
 		    BSF		    STATUS, C
 		    RLF		    PORTB, F	    ;MUEVE EL CERO A LA IZQUIERDA
@@ -408,7 +414,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    GOTO	    CAMBIAR_ALARMA
 		
 		    ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
-		    INCF	    N_TECLA
+		    INCF	    N_TECLA, F
 		    MOVLW	    .1
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z
@@ -423,8 +429,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_U
-		    
-		    CLRF	    N_TECLA         
+		          
 		    GOTO	    FIN_ISR_TECLADO
 		    
 		    

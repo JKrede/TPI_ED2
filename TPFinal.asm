@@ -310,7 +310,7 @@ TEST_ALARMA
 ;----------------------------------------------------------
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
@@ -320,18 +320,27 @@ DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    
 TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_C
+		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_D 
 		    
 TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_D
+		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_U
 		    
 TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_U
+		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    
 		    RETURN	
 
 ADD_C		    INCF	    VAL_ADC_C, F
@@ -465,8 +474,14 @@ UART_TX
 ;   Lógica antirrebote incorporada
 ;------------------------------------------------
 ISR_TECLADO	    CLRF	    POS_TECLA
-		    CLRF	    N_TECLA
+		    
 		    CLRF	    TECLA_ACTIVA
+		    
+		    MOVLW	    .3		    ;VERIFICA QUE N_TECLA NO SUPERE 3
+		    SUBWF	    N_TECLA, W
+		    BTFSC	    STATUS,Z
+		    CLRF	    N_TECLA
+		    
 		    BANKSEL	    PORTB
 		    MOVLW	    B'11111110'
 		    MOVWF	    PORTB
@@ -486,10 +501,10 @@ TEST_COL	    INCF	    POS_TECLA, F
 		    BTFSS	    PORTB, RB6	    ;TESTEA COLUMNA3
 		    GOTO	    TECLA_PRES
 		    GOTO	    CAMBIAR_FILA
-		    
+
 CAMBIAR_FILA	    MOVLW	    .12
 		    SUBWF	    POS_TECLA, W
-		    BTFSC	    STATUS,Z
+		    BTFSC	    STATUS, Z
 		    GOTO	    FIN_ISR_TECLADO ;FINALIZA 
 		    BSF		    STATUS, C
 		    RLF		    PORTB, F	    ;MUEVE EL CERO A LA IZQUIERDA
@@ -520,7 +535,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    GOTO	    CAMBIAR_ALARMA
 		
 		    ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
-		    INCF	    N_TECLA
+		    INCF	    N_TECLA, F
 		    MOVLW	    .1
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z
@@ -535,8 +550,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_U
-		    
-		    CLRF	    N_TECLA         
+		          
 		    GOTO	    FIN_ISR_TECLADO
 		    
 		    

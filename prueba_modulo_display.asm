@@ -91,9 +91,7 @@ REFRESH
 ;----------------------------------------------------------
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
-		    MOVLW	    .0		    ;TEMPORAL
-		    MOVWF	    VAL_ADC_M	    ;TEMPORAL
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
@@ -103,18 +101,27 @@ DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    
 TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_C
+		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_D 
 		    
 TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_D
+		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_U
 		    
 TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_U
+		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    
 		    RETURN	
 
 ADD_C		    INCF	    VAL_ADC_C, F

@@ -1,4 +1,4 @@
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  1
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00041 ;----------------------------------------------------------------
                       00042 ; CONFIGURACIÓN DE DISPLAYS 7 SEGMENTOS
                       00043 ;----------------------------------------------------------------
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  2
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
                       00082 ;--------------------------
                       00083 ;----------------------------------------------------------
                       00084 ; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  3
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -131,141 +131,131 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00091 ;----------------------------------------------------------
                       00092 
 0012   1283           00093 DESCOMP_VAL_ADC     BCF             STATUS, RP0
-0013   1303           00094                     BCF             STATUS, RP1     ;BANCO DE LOS VALORES DE ADC 
-0014   0870           00095                     MOVF            VAL_ADC, W
-0015   00A3           00096                     MOVWF           TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
-0016   01FC           00097                     CLRF            VAL_ADC_U       ;UNIDAD DEL VALOR A MOSTRAR
-0017   01FD           00098                     CLRF            VAL_ADC_D       ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
-0018   01FE           00099                     CLRF            VAL_ADC_C       ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
-0019   01FF           00100                     CLRF            VAL_ADC_M       ;NUNCA VALE DISTINTO DE CERO
-                      00101                     
-001A   3064           00102 TEST_C              MOVLW           .100            ;CALCULA LA CENTENA
-001B   02A3           00103                     SUBWF           TEMP_VAL_ADC, F
-001C   1803           00104                     BTFSC           STATUS, C
-001D   2???           00105                     GOTO            ADD_C
-001E   3064           00106                     MOVLW           .100            ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE 
-                            DA CUANDO ES 0)          
-001F   07A3           00107                     ADDWF           TEMP_VAL_ADC, F 
-0020   2???           00108                     GOTO            TEST_D 
-                      00109                     
-0021   300A           00110 TEST_D              MOVLW           .10             ;CALCULA LA DECENA
-0022   02A3           00111                     SUBWF           TEMP_VAL_ADC, F
-0023   1803           00112                     BTFSC           STATUS, C
-0024   2???           00113                     GOTO            ADD_D
-0025   300A           00114                     MOVLW           .10             ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE 
-                            DA CUANDO ES 0)          
-0026   07A3           00115                     ADDWF           TEMP_VAL_ADC, F 
-0027   2???           00116                     GOTO            TEST_U
-                      00117                     
-0028   3001           00118 TEST_U              MOVLW           .1              ;CALCULA LA UNIDAD
-0029   02A3           00119                     SUBWF           TEMP_VAL_ADC, F
-002A   1803           00120                     BTFSC           STATUS, C
-002B   2???           00121                     GOTO            ADD_U
-002C   3001           00122                     MOVLW           .1              ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE 
-                            DA CUANDO ES 0)          
-002D   07A3           00123                     ADDWF           TEMP_VAL_ADC, F 
-                      00124                     
-002E   0008           00125                     RETURN      
-                      00126 
-002F   0AFE           00127 ADD_C               INCF            VAL_ADC_C, F
-0030   2???           00128                     GOTO            TEST_C
-                      00129 
-0031   0AFD           00130 ADD_D               INCF            VAL_ADC_D, F
-0032   2???           00131                     GOTO            TEST_D         
-                      00132 
-0033   0AFC           00133 ADD_U               INCF            VAL_ADC_U, F
-0034   2???           00134                     GOTO            TEST_U
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  4
+0013   1303           00094                     BCF             STATUS, RP1
+0014   3000           00095                     MOVLW           .0              ;TEMPORAL
+0015   00FF           00096                     MOVWF           VAL_ADC_M       ;TEMPORAL
+0016   0870           00097                     MOVF            VAL_ADC, W
+0017   00A3           00098                     MOVWF           TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
+0018   01FC           00099                     CLRF            VAL_ADC_U       ;UNIDAD DEL VALOR A MOSTRAR
+0019   01FD           00100                     CLRF            VAL_ADC_D       ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
+001A   01FE           00101                     CLRF            VAL_ADC_C       ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
+001B   01FF           00102                     CLRF            VAL_ADC_M       ;NUNCA VALE DISTINTO DE CERO
+                      00103                     
+001C   3064           00104 TEST_C              MOVLW           .100            ;CALCULA LA CENTENA
+001D   02A3           00105                     SUBWF           TEMP_VAL_ADC, F
+001E   1D03           00106                     BTFSS           STATUS, Z
+001F   2???           00107                     GOTO            ADD_C
+                      00108                     
+0020   300A           00109 TEST_D              MOVLW           .10             ;CALCULA LA DECENA
+0021   02A3           00110                     SUBWF           TEMP_VAL_ADC, F
+0022   1D03           00111                     BTFSS           STATUS, Z
+0023   2???           00112                     GOTO            ADD_D
+                      00113                     
+0024   3001           00114 TEST_U              MOVLW           .1              ;CALCULA LA UNIDAD
+0025   02A3           00115                     SUBWF           TEMP_VAL_ADC, F
+0026   1D03           00116                     BTFSS           STATUS, Z
+0027   2???           00117                     GOTO            ADD_U
+0028   0008           00118                     RETURN      
+                      00119 
+0029   0AFE           00120 ADD_C               INCF            VAL_ADC_C, F
+002A   2???           00121                     GOTO            TEST_C
+                      00122 
+002B   0AFD           00123 ADD_D               INCF            VAL_ADC_D, F
+002C   2???           00124                     GOTO            TEST_D         
+                      00125 
+002D   0AFC           00126 ADD_U               INCF            VAL_ADC_U, F
+002E   2???           00127                     GOTO            TEST_U
+                      00128         
+                      00129 ;------------------------------------------------
+                      00130 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
+                      00131 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
+                      00132 ;   Requiere: TABLA_DSPL inicializada
+                      00133 ;   Tiempo: ~20ms (4 displays * 5ms)
+                      00134 ;------------------------------------------------
+002F   2???           00135 SHOW_ADC_DISPLAY    CALL            DESCOMP_VAL_ADC
+                      00136                     
+0030   1283 1303      00137                     BANKSEL         PORTA           ;BANCO 0
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00135         
-                      00136 ;------------------------------------------------
-                      00137 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
-                      00138 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
-                      00139 ;   Requiere: TABLA_DSPL inicializada
-                      00140 ;   Tiempo: ~20ms (4 displays * 5ms)
-                      00141 ;------------------------------------------------
-0035   2???           00142 SHOW_ADC_DISPLAY    CALL            DESCOMP_VAL_ADC
-                      00143                     
-0036   1283 1303      00144                     BANKSEL         PORTA           ;BANCO 0
-0038   3001           00145                     MOVLW           B'00000001'
-0039   0085           00146                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
-003A   087C           00147                     MOVF            VAL_ADC_U, W
-003B   2???           00148                     CALL            TABLA_DSPL      
-003C   0088           00149                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+0032   3001           00138                     MOVLW           B'00000001'
+0033   0085           00139                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
+0034   087C           00140                     MOVF            VAL_ADC_U, W
+0035   2???           00141                     CALL            TABLA_DSPL      
+0036   0088           00142                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+0037   2???           00143                     CALL            DELAY5ms
+                      00144                     
+0038   3002           00145                     MOVLW           B'00000010'
+0039   0085           00146                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
+003A   087D           00147                     MOVF            VAL_ADC_D, W
+003B   2???           00148                     CALL            TABLA_DSPL
+003C   0088           00149                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
                             RRESPONDIENTE FORMATO
 003D   2???           00150                     CALL            DELAY5ms
                       00151                     
-003E   3002           00152                     MOVLW           B'00000010'
-003F   0085           00153                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
-0040   087D           00154                     MOVF            VAL_ADC_D, W
+003E   3004           00152                     MOVLW           B'00000100'
+003F   0085           00153                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
+0040   087E           00154                     MOVF            VAL_ADC_C, W
 0041   2???           00155                     CALL            TABLA_DSPL
-0042   0088           00156                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
-                            RRESPONDIENTE FORMATO
+0042   0088           00156                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
+                            ORRESPONDIENTE FORMATO
 0043   2???           00157                     CALL            DELAY5ms
                       00158                     
-0044   3004           00159                     MOVLW           B'00000100'
-0045   0085           00160                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
-0046   087E           00161                     MOVF            VAL_ADC_C, W
+0044   3008           00159                     MOVLW           B'00001000'
+0045   0085           00160                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
+0046   087F           00161                     MOVF            VAL_ADC_M, W
 0047   2???           00162                     CALL            TABLA_DSPL
-0048   0088           00163                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
-                            ORRESPONDIENTE FORMATO
-0049   2???           00164                     CALL            DELAY5ms
-                      00165                     
-004A   3008           00166                     MOVLW           B'00001000'
-004B   0085           00167                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
-004C   087F           00168                     MOVF            VAL_ADC_M, W
-004D   2???           00169                     CALL            TABLA_DSPL
-004E   0088           00170                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CO
+0048   0088           00163                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CO
                             N SU CORRESPONDIENTE FORMATO
-004F   2???           00171                     CALL            DELAY5ms
-0050   0008           00172                     RETURN
-                      00173                     
-                      00174                     ;DELAY DE 5ms USADO PARA MOSTRAR VALORES EN DISPLAY (SHOW_DISPLAY)
-0051   1283           00175 DELAY5ms            BCF             STATUS, RP0
-0052   1303           00176                     BCF             STATUS, RP1     ;BANCO 0
-0053   3005           00177                     MOVLW           .5              ;m=5
-0054   00A0           00178                     MOVWF           DELAY1DSPL
-0055   3005           00179 DELAY1              MOVLW           .5              ;n=5
-0056   00A1           00180                     MOVWF           DELAY2DSPL
-0057   3041           00181 DELAY2              MOVLW           .65             ;p=65
-0058   00A2           00182                     MOVWF           DELAY3DSPL
-0059   0BA2           00183 DELAY3              DECFSZ          DELAY3DSPL, F
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  5
+0049   2???           00164                     CALL            DELAY5ms
+004A   0008           00165                     RETURN
+                      00166                     
+                      00167                     ;DELAY DE 5ms USADO PARA MOSTRAR VALORES EN DISPLAY (SHOW_DISPLAY)
+004B   1283           00168 DELAY5ms            BCF             STATUS, RP0
+004C   1303           00169                     BCF             STATUS, RP1     ;BANCO 0
+004D   3005           00170                     MOVLW           .5              ;m=5
+004E   00A0           00171                     MOVWF           DELAY1DSPL
+004F   3005           00172 DELAY1              MOVLW           .5              ;n=5
+0050   00A1           00173                     MOVWF           DELAY2DSPL
+0051   3041           00174 DELAY2              MOVLW           .65             ;p=65
+0052   00A2           00175                     MOVWF           DELAY3DSPL
+0053   0BA2           00176 DELAY3              DECFSZ          DELAY3DSPL, F
+0054   2???           00177                     GOTO            DELAY3
+0055   0BA1           00178                     DECFSZ          DELAY2DSPL, F
+0056   2???           00179                     GOTO            DELAY2
+0057   0BA0           00180                     DECFSZ          DELAY1DSPL, F
+0058   2???           00181                     GOTO            DELAY1
+0059   0008           00182                     RETURN
+                      00183                     
+                      00184 
+                      00185                     ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSIT
+                            IVA)
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-005A   2???           00184                     GOTO            DELAY3
-005B   0BA1           00185                     DECFSZ          DELAY2DSPL, F
-005C   2???           00186                     GOTO            DELAY2
-005D   0BA0           00187                     DECFSZ          DELAY1DSPL, F
-005E   2???           00188                     GOTO            DELAY1
-005F   0008           00189                     RETURN
-                      00190                     
-                      00191 
-                      00192                     ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSIT
-                            IVA)
-0060   0782           00193 TABLA_DSPL          ADDWF           PCL, F
-0061   343F           00194                     RETLW           0X3F            ;0
-0062   3406           00195                     RETLW           0X06            ;1
-0063   345B           00196                     RETLW           0X5B            ;2
-0064   344F           00197                     RETLW           0X4F            ;3
-0065   3466           00198                     RETLW           0X66            ;4
-0066   346D           00199                     RETLW           0X6D            ;5
-0067   347D           00200                     RETLW           0X7D            ;6
-0068   3407           00201                     RETLW           0X07            ;7
-0069   347F           00202                     RETLW           0X7F            ;8
-006A   3467           00203                     RETLW           0X67            ;9   
-                      00204 
-                      00205                     
-                      00206 
-2FF1                  00207                     END
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  6
+005A   0782           00186 TABLA_DSPL          ADDWF           PCL, F
+005B   343F           00187                     RETLW           0X3F            ;0
+005C   3406           00188                     RETLW           0X06            ;1
+005D   345B           00189                     RETLW           0X5B            ;2
+005E   344F           00190                     RETLW           0X4F            ;3
+005F   3466           00191                     RETLW           0X66            ;4
+0060   346D           00192                     RETLW           0X6D            ;5
+0061   347D           00193                     RETLW           0X7D            ;6
+0062   3407           00194                     RETLW           0X07            ;7
+0063   347F           00195                     RETLW           0X7F            ;8
+0064   3467           00196                     RETLW           0X67            ;9   
+                      00197 
+                      00198                     
+                      00199 
+2FF1                  00200                     END
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  6
 
 
 SYMBOL TABLE
@@ -281,9 +271,9 @@ ADCON1                            0000009F
 ADCS0                             00000006
 ADCS1                             00000007
 ADDEN                             00000003
-ADD_C                             0000002F
-ADD_D                             00000031
-ADD_U                             00000033
+ADD_C                             00000029
+ADD_D                             0000002B
+ADD_U                             0000002D
 ADFM                              00000007
 ADIE                              00000006
 ADIF                              00000006
@@ -324,7 +314,7 @@ BRG3                              00000003
 BRG4                              00000004
 BRG5                              00000005
 BRG6                              00000006
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  7
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  7
 
 
 SYMBOL TABLE
@@ -383,7 +373,7 @@ CCPR2                             0000001B
 CCPR2H                            0000001C
 CCPR2L                            0000001B
 CHS0                              00000002
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  8
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  8
 
 
 SYMBOL TABLE
@@ -407,13 +397,13 @@ DC1B0                             00000004
 DC1B1                             00000005
 DC2B0                             00000004
 DC2B1                             00000005
-DELAY1                            00000055
+DELAY1                            0000004F
 DELAY1DSPL                        00000020
-DELAY2                            00000057
+DELAY2                            00000051
 DELAY2DSPL                        00000021
-DELAY3                            00000059
+DELAY3                            00000053
 DELAY3DSPL                        00000022
-DELAY5ms                          00000051
+DELAY5ms                          0000004B
 DESCOMP_VAL_ADC                   00000012
 D_A                               00000005
 D_NOT_A                           00000005
@@ -442,7 +432,7 @@ GO                                00000001
 GO_DONE                           00000001
 GO_NOT_DONE                       00000001
 HTS                               00000002
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE  9
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE  9
 
 
 SYMBOL TABLE
@@ -501,7 +491,7 @@ OERR                              00000001
 OPTION_REG                        00000081
 OSCCON                            0000008F
 OSCTUNE                           00000090
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 10
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 10
 
 
 SYMBOL TABLE
@@ -560,7 +550,7 @@ RA7                               00000007
 RB0                               00000000
 RB1                               00000001
 RB2                               00000002
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 11
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 11
 
 
 SYMBOL TABLE
@@ -618,8 +608,8 @@ SCKP                              00000004
 SCS                               00000000
 SEN                               00000000
 SENDB                             00000003
-SHOW_ADC_DISPLAY                  00000035
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 12
+SHOW_ADC_DISPLAY                  0000002F
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 12
 
 
 SYMBOL TABLE
@@ -671,14 +661,14 @@ T1SYNC                            00000002
 T2CKPS0                           00000000
 T2CKPS1                           00000001
 T2CON                             00000012
-TABLA_DSPL                        00000060
+TABLA_DSPL                        0000005A
 TEMP_VAL_ADC                      00000023
-TEST_C                            0000001A
-TEST_D                            00000021
-TEST_U                            00000028
+TEST_C                            0000001C
+TEST_D                            00000020
+TEST_U                            00000024
 TMR0                              00000001
 TMR0IE                            00000005
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 13
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 13
 
 
 SYMBOL TABLE
@@ -737,7 +727,7 @@ TRISD4                            00000004
 TRISD5                            00000005
 TRISD6                            00000006
 TRISD7                            00000007
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 14
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 14
 
 
 SYMBOL TABLE
@@ -796,7 +786,7 @@ WPUB1                             00000001
 WPUB2                             00000002
 WPUB3                             00000003
 WPUB4                             00000004
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 15
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 15
 
 
 SYMBOL TABLE
@@ -855,7 +845,7 @@ _IESO_OFF                         00003BFF
 _IESO_ON                          00003FFF
 _INTOSC                           00003FFD
 _INTOSCIO                         00003FFC
-MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  13:01:31         PAGE 16
+MPASM 5.81         PRUEBA_MODULO_DISPLAY.ASM   6-19-2025  12:37:35         PAGE 16
 
 
 SYMBOL TABLE
@@ -880,6 +870,8 @@ _WRT_HALF                         000039FF
 _WRT_OFF                          00003FFF
 _XT_OSC                           00003FF9
 __16F887                          00000001
+__DEBUG                           
+__MPLAB_DEBUGGER_SIMULATOR        1
 
 Errors   :     0
 Warnings :     0 reported,     0 suppressed

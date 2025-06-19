@@ -72,7 +72,7 @@ CONF_TECLADO	    MACRO
 				    ; <RB4-RB6> ENTRADAS
     BANKSEL	    WPUB	    
     BCF		    OPTION_REG,7
-    MOVLW	    0XFF
+    MOVLW	    B'01110000'
     MOVWF	    WPUB	    ; RESISTENCIAS PULL-UPS ACTIVADAS
     BANKSEL	    PORTB
     MOVLW	    B'01110000'	    
@@ -162,9 +162,7 @@ REFRESH		    BTFSC	    OPCIONES, 0
 ;----------------------------------------------------------
 
 DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1
-		    MOVLW	    .0		    ;TEMPORAL
-		    MOVWF	    VAL_ADC_M	    ;TEMPORAL
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
 		    MOVF	    VAL_ADC, W
 		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
 		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
@@ -174,18 +172,27 @@ DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
 		    
 TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_C
+		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_D 
 		    
 TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_D
+		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    GOTO	    TEST_U
 		    
 TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
 		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS,C
+		    BTFSC	    STATUS, C
 		    GOTO	    ADD_U
+		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
+		    ADDWF	    TEMP_VAL_ADC, F 
+		    
 		    RETURN	
 
 ADD_C		    INCF	    VAL_ADC_C, F
@@ -284,8 +291,14 @@ TABLA_DSPL	    ADDWF	    PCL, F
 ;   Lógica antirrebote incorporada
 ;------------------------------------------------
 ISR_TECLADO	    CLRF	    POS_TECLA
-		    CLRF	    N_TECLA
+		    
 		    CLRF	    TECLA_ACTIVA
+		    
+		    MOVLW	    .3		    ;VERIFICA QUE N_TECLA NO SUPERE 3
+		    SUBWF	    N_TECLA, W
+		    BTFSC	    STATUS,Z
+		    CLRF	    N_TECLA
+		    
 		    BANKSEL	    PORTB
 		    MOVLW	    B'11111110'
 		    MOVWF	    PORTB
@@ -354,8 +367,7 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    SUBWF	    N_TECLA,W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_U
-		    
-		    CLRF	    N_TECLA         
+		          
 		    GOTO	    FIN_ISR_TECLADO
 		    
 		    
@@ -401,6 +413,8 @@ CAMBIAR_ALARMA
 		    GOTO	    FIN_ISR_TECLADO
 		    		    
 FIN_ISR_TECLADO	    
+		    MOVLW	    B'00001111'
+		    MOVWF	    PORTB
 		    BCF		    INTCON, RBIF
 		    RETURN  
 		    
