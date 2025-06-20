@@ -16,8 +16,10 @@
       <itemPath>prueba_modulo_display.asm</itemPath>
       <itemPath>prueba_modulo_adc.asm</itemPath>
       <itemPath>prueba_modulo_teclado.asm</itemPath>
-      <itemPath>prueba_modulo_alarma.asm</itemPath>
       <itemPath>prueba_modulo_comunicacion.asm</itemPath>
+      <itemPath>prueba_modulo_alarma_off.asm</itemPath>
+      <itemPath>prueba_modulo_alarma_apagada.asm</itemPath>
+      <itemPath>prueba_modulo_alarma_on.asm</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -484,7 +486,13 @@
                   value=""/>
         <property key="warningmessagebreakoptions.warningmessages" value="holdstate"/>
       </Simulator>
-      <item path="TPFinal.asm" ex="true" overriding="false">
+      <item path="TPFinal.asm" ex="false" overriding="false">
+        <MPASMWIN-AS>
+        </MPASMWIN-AS>
+        <MPASMWIN-LD>
+        </MPASMWIN-LD>
+        <mpasmsuite>
+        </mpasmsuite>
       </item>
       <mpasmsuite>
         <property key="absolute-mode" value="false"/>
@@ -501,7 +509,11 @@
         <mpasmsuite>
         </mpasmsuite>
       </item>
-      <item path="prueba_modulo_alarma.asm" ex="false" overriding="false">
+      <item path="prueba_modulo_alarma_apagada.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_alarma_off.asm" ex="true" overriding="false">
+      </item>
+      <item path="prueba_modulo_alarma_on.asm" ex="true" overriding="false">
         <MPASMWIN-AS>
         </MPASMWIN-AS>
         <MPASMWIN-LD>

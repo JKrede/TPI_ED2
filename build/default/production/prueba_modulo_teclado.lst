@@ -1,0 +1,1362 @@
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;------------------------------------------------------------
+                      00002 ; PROGRAMA: Medidor de CO - Prueba del modulo teclado - Trabajo Práctico Final Electrónica Digital 2
+                      00003 ; ARCHIVO:  TPFinal.asm
+                      00004 ; AUTORES:  Jerez, Facundo - Krede, Julián - Méndez Quiroga, Celeste Evangelina
+                      00005 ; FECHA:    19/06/2025
+                      00006 ; MICROCONTROLADOR: PIC16F887
+                      00007 ; CLOCK: Oscilador XT (cristal externo) 4[MHz]
+                      00008 ;
+                      00009 ;------------------------------------------------------------
+                      00010                     
+                      00011                     LIST P=16F887
+                      00012                     #INCLUDE "P16F887.INC"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Jul 23 2018
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2018 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00013         
+2007   2FF1           00014                     __CONFIG _CONFIG1, _XT_OSC & _WDTE_OFF & _MCLRE_ON & _LVP_OFF
+                      00015 
+                      00016                     
+                      00017 ;------------------------------------------------------------------------------------------------------
+                      00018 ; PRUEBA: INICIAR EL SISTEMA Y VERIFICAR EL CORRECTO FUNCIONAMIENTO DEL TECLADO MEDIANTE
+                      00019 ;         EL SUBSISTEMA DE VISUALIZACION DE DATOS (DISPLAYS 7 SEGMENTOS) Y EL SUBSISTEMA
+                      00020 ;         DE SEÑALIZACION OPTICA Y ACUSTICA
+                      00021 ;   PRUEBAS:
+                      00022 ;   1. Utilizando la tecla * intercambiar entre los modos del subsistema de visualizacion de datos
+                      00023 ;   2. Utilizando las teclas 0-9 cambiar el valor umbral
+                      00024 ;   3. Cambiar el valor umbral a un valor menor al valor de ADC y utilizar la tecla # para encender
+                      00025 ;       y apagar la alarma
+                      00026 ;------------------------------------------------------------------------------------------------------
+                      00027                             
+                      00028                     
+                      00029 ;-------------------------
+                      00030 ; VARIABLES DEL SISTEMA
+                      00031 ;-------------------------
+                      00032                     
+                      00033 ; Variables en banco 0 (0x20-0x6F)
+  00000020            00034 DELAY1DSPL    EQU   0x20    ; Contador delay para displays (primer nivel)
+  00000021            00035 DELAY2DSPL    EQU   0x21    ; Contador delay para displays (segundo nivel)
+  00000022            00036 DELAY3DSPL    EQU   0x22    ; Contador delay para displays (tercer nivel)
+  00000023            00037 TEMP_VAL_ADC  EQU   0x23    ; Valor temporal del ADC para realizar la descomposicion
+                      00038 
+                      00039 ; Variables en banco común (0x70-0x7F)
+  00000070            00040 VAL_ADC       EQU   0x70    ; Valor crudo del ADC (0-255)
+  00000071            00041 VAL_UMBRAL_U  EQU   0x71    ; Unidades del umbral (0-9)
+  00000072            00042 VAL_UMBRAL_D  EQU   0x72    ; Decenas del umbral (0-9)
+  00000073            00043 VAL_UMBRAL_C  EQU   0x73    ; Centenas del umbral (0-9)
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+  00000074            00044 POS_TECLA     EQU   0x74    ; Posición de tecla presionada (1-12)
+  00000075            00045 N_TECLA       EQU   0x75    ; Contador de teclas presionadas (1-3)
+  00000076            00046 TECLA_ACTIVA  EQU   0x76    ; Tecla actualmente presionada
+  00000077            00047 OPCIONES      EQU   0x77    ; Registro de opciones:
+                      00048                              ;   BIT 0: Modo display (0=ADC, 1=Teclado)
+                      00049                              ;   BIT 1: Estado alarma (0=NO DISPARADA, 1=DISPARADA)
+                      00050                              ;   BIT 2: Activar/Desactivar Alarma (0=OFF, 1=ON)
+  0000007A            00051 W_TEMP        EQU   0x7A    ; Backup de W durante ISR
+  0000007B            00052 STATUS_TEMP   EQU   0x7B    ; Backup de STATUS durante ISR
+  0000007C            00053 VAL_ADC_U     EQU   0x7C    ; Unidades del valor ADC (0-9)
+  0000007D            00054 VAL_ADC_D     EQU   0x7D    ; Decenas del valor ADC (0-9)
+  0000007E            00055 VAL_ADC_C     EQU   0x7E    ; Centenas del valor ADC (0-9)
+  0000007F            00056 VAL_ADC_M     EQU   0x7F    ; Unidades de mil del valor ADC
+                      00057    
+                      00058    
+                      00059 ;-------------------------
+                      00060 ; MACROS DE CONFIGURACIÓN
+                      00061 ;-------------------------
+                      00062 
+                      00063 ;----------------------------------------------------------------
+                      00064 ; CONFIGURACIÓN DEL TECLADO
+                      00065 ;----------------------------------------------------------------
+                      00066 ; CONFIG_TECLADO: Configura el puerto B para teclado matricial
+                      00067 ;   - RB0-RB3 como salidas (filas)
+                      00068 ;   - RB4-RB6 como entradas con pull-up (columnas)
+                      00069 ;   - Habilita interrupciones por cambio en puerto B
+                      00070 ;----------------------------------------------------------------
+                      00071 CONF_TECLADO        MACRO
+                      00072 
+                      00073     BANKSEL         ANSELH
+                      00074     CLRF            ANSELH          ; PUERTO B COMO DIGITAL
+                      00075     MOVLW           B'01110000'  
+                      00076     MOVWF           TRISB           ; <RB0-RB3> SALIDAS 
+                      00077                                     ; <RB4-RB6> ENTRADAS
+                      00078     BANKSEL         WPUB            
+                      00079     BCF             OPTION_REG,7
+                      00080     MOVLW           B'01110000'
+                      00081     MOVWF           WPUB            ; RESISTENCIAS PULL-UPS ACTIVADAS
+                      00082     BANKSEL         PORTB
+                      00083     MOVLW           B'01110000'     
+                      00084     MOVWF           PORTB           ;TODAS LAS ENTRADAS EN ALTO POR DEFECTO
+                      00085 
+                      00086     ENDM
+                      00087 
+                      00088 ;----------------------------------------------------------------
+                      00089 ; CONFIGURACIÓN DE DISPLAYS 7 SEGMENTOS
+                      00090 ;----------------------------------------------------------------
+                      00091 ; Configura los puertos para controlar 4 displays de 7 segmentos:
+                      00092 ;   - PORTD como salida (segmentos a-g)
+                      00093 ;   - RA0-RA3 como salidas (control de displays)
+                      00094 ;   - Configura AN7 como entrada analógica para el sensor
+                      00095 ;----------------------------------------------------------------
+                      00096 CONF_DISPLAY        MACRO
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00097     BANKSEL         ANSEL
+                      00098     MOVLW           B'10000000'  ; AN7 como analógico, demás pines como digital
+                      00099     MOVWF           ANSEL
+                      00100 
+                      00101     BANKSEL         TRISD
+                      00102     CLRF            TRISD        ; PORTD completo como salida (segmentos)
+                      00103 
+                      00104     MOVLW           B'11110000'  ; RA0-RA3 como salidas (control displays)
+                      00105     MOVWF           TRISA        ; RA4-RA7 como entradas (no usadas)
+                      00106     ENDM
+                      00107 
+                      00108 
+                      00109 ;----------------------------------------------------------------
+                      00110 ; CONFIGURACIÓN DE INTERRUPCIONES
+                      00111 ;----------------------------------------------------------------
+                      00112 ; Habilita las interrupciones globales y específicas:
+                      00113 ;   - Interrupciones por cambio en PORTB (teclado)
+                      00114 ;   - Interrupciones por desborde del Timer0
+                      00115 ;   - Configura IOCB para interrupciones solo en RB4-RB6
+                      00116 ;----------------------------------------------------------------
+                      00117 CONF_INTERRUPCION           MACRO
+                      00118     MOVLW           B'10101000'  ; Habilita: INTCON.GIE, INTCON.T0IE, INTCON.RBIE
+                      00119     MOVWF           INTCON
+                      00120 
+                      00121     BANKSEL         IOCB
+                      00122     MOVLW           B'01110000'  ; Habilita interrupciones solo en RB4-RB6
+                      00123     MOVWF           IOCB
+                      00124 
+                      00125     ENDM
+                      00126     
+                      00127 ;----------------------------------------------------------------
+                      00128 ; CONFIGURACIÓN DE ALARMA
+                      00129 ;----------------------------------------------------------------
+                      00130 ; Configura RC0 como salida para controlar la alarma:
+                      00131 ;   - Puede ser un LED, buzzer o relay
+                      00132 ;   - Inicialmente apagada
+                      00133 ;----------------------------------------------------------------
+                      00134 CONF_ALARMA                 MACRO
+                      00135     BANKSEL         TRISC
+                      00136     BCF             TRISC, 0     ; RC0 como salida
+                      00137 
+                      00138     BANKSEL         PORTC
+                      00139     BCF             PORTC, 0     ; Apaga la alarma inicialmente
+                      00140 
+                      00141     ENDM
+                      00142     
+                      00143 ;-------------------------
+                      00144 ; Código principal
+                      00145 ;-------------------------
+                      00146                     ORG             0X00
+0000   2???           00147                     GOTO            INICIO
+                      00148                     
+                      00149                     ORG             0X04
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0004   2???           00150                     GOTO            ISR
+                      00151                     
+                      00152                     ORG             0X05
+                      00153 
+0005                  00154 INICIO              ;INICIO PROGRAMA
+                      00155                     CONF_TECLADO
+                          M 
+0005   1683 1703          M     BANKSEL         ANSELH
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0007   0189               M     CLRF            ANSELH          ; PUERTO B COMO DIGITAL
+0008   3070               M     MOVLW           B'01110000'  
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0009   0086               M     MOVWF           TRISB           ; <RB0-RB3> SALIDAS 
+                          M                                     ; <RB4-RB6> ENTRADAS
+000A   1683 1303          M     BANKSEL         WPUB            
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000C   1381               M     BCF             OPTION_REG,7
+000D   3070               M     MOVLW           B'01110000'
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000E   0095               M     MOVWF           WPUB            ; RESISTENCIAS PULL-UPS ACTIVADAS
+000F   1283 1303          M     BANKSEL         PORTB
+0011   3070               M     MOVLW           B'01110000'     
+0012   0086               M     MOVWF           PORTB           ;TODAS LAS ENTRADAS EN ALTO POR DEFECTO
+                          M 
+                      00156                     CONF_DISPLAY
+0013   1683 1703          M     BANKSEL         ANSEL
+0015   3080               M     MOVLW           B'10000000'  ; AN7 como analógico, demás pines como digital
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0016   0088               M     MOVWF           ANSEL
+                          M 
+0017   1683 1303          M     BANKSEL         TRISD
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0019   0188               M     CLRF            TRISD        ; PORTD completo como salida (segmentos)
+                          M 
+001A   30F0               M     MOVLW           B'11110000'  ; RA0-RA3 como salidas (control displays)
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+001B   0085               M     MOVWF           TRISA        ; RA4-RA7 como entradas (no usadas)
+                      00157                     CONF_INTERRUPCION
+001C   30A8               M     MOVLW           B'10101000'  ; Habilita: INTCON.GIE, INTCON.T0IE, INTCON.RBIE
+001D   008B               M     MOVWF           INTCON
+                          M 
+001E   1683 1303          M     BANKSEL         IOCB
+0020   3070               M     MOVLW           B'01110000'  ; Habilita interrupciones solo en RB4-RB6
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0021   0096               M     MOVWF           IOCB
+                          M 
+0022   01F0           00158                     CLRF            VAL_ADC        ; Inicializa el valor del adc en 0 para contrastar
+0023   01F7           00159                     CLRF            OPCIONES       ; Inicializar todas las opciones a 0
+0024   3008           00160                     MOVLW           .8             ; Valor por defecto para umbral (888)
+0025   00F3           00161                     MOVWF           VAL_UMBRAL_C
+0026   00F2           00162                     MOVWF           VAL_UMBRAL_D
+0027   00F1           00163                     MOVWF           VAL_UMBRAL_U
+                      00164                     
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0028   1877           00165 REFRESH             BTFSC           OPCIONES, 0
+0029   2???           00166                     CALL            MOSTRAR_TECLADO
+002A   1C77           00167                     BTFSS           OPCIONES, 0
+002B   2???           00168                     CALL            SHOW_ADC_DISPLAY
+002C   2???           00169                     GOTO            REFRESH
+                      00170                     
+                      00171                     
+                      00172 ;-------------------------- 
+                      00173 ; Subrutinas del display
+                      00174 ;--------------------------
+                      00175                     
+                      00176 ;------------------------------------------------
+                      00177 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
+                      00178 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
+                      00179 ;   Requiere: TABLA_DSPL inicializada
+                      00180 ;   Tiempo: ~20ms (4 displays * 5ms)
+                      00181 ;------------------------------------------------
+002D   2???           00182 SHOW_ADC_DISPLAY    CALL            DESCOMP_VAL_ADC
+                      00183                     
+002E   1283 1303      00184                     BANKSEL         PORTA           ;BANCO 0
+0030   3001           00185                     MOVLW           B'00000001'
+0031   0085           00186                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
+0032   087C           00187                     MOVF            VAL_ADC_U, W
+0033   2???           00188                     CALL            TABLA_DSPL      
+0034   0088           00189                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+0035   2???           00190                     CALL            DELAY5ms
+                      00191                     
+0036   3002           00192                     MOVLW           B'00000010'
+0037   0085           00193                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
+0038   087D           00194                     MOVF            VAL_ADC_D, W
+0039   2???           00195                     CALL            TABLA_DSPL
+003A   0088           00196                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+003B   2???           00197                     CALL            DELAY5ms
+                      00198                     
+003C   3004           00199                     MOVLW           B'00000100'
+003D   0085           00200                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
+003E   087E           00201                     MOVF            VAL_ADC_C, W
+003F   2???           00202                     CALL            TABLA_DSPL
+0040   0088           00203                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
+                            ORRESPONDIENTE FORMATO
+0041   2???           00204                     CALL            DELAY5ms
+                      00205                     
+0042   3008           00206                     MOVLW           B'00001000'
+0043   0085           00207                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
+0044   087F           00208                     MOVF            VAL_ADC_M, W
+0045   2???           00209                     CALL            TABLA_DSPL
+0046   0088           00210                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CO
+                            N SU CORRESPONDIENTE FORMATO
+0047   2???           00211                     CALL            DELAY5ms
+0048   0008           00212                     RETURN                  
+                      00213                     
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00214                             
+                      00215 ;----------------------------------------------------------
+                      00216 ; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
+                      00217 ;   Entrada: VAL_ADC (valor a descomponer)
+                      00218 ;   Salida:  VAL_ADC_U (unidades)
+                      00219 ;            VAL_ADC_D (decenas)
+                      00220 ;            VAL_ADC_C (centenas)
+                      00221 ;            VAL_ADC_M (unidades de mil, siempre 0)
+                      00222 ;   Altera:  W, STATUS
+                      00223 ;----------------------------------------------------------
+0049   1283           00224 DESCOMP_VAL_ADC     BCF             STATUS, RP0
+004A   1303           00225                     BCF             STATUS, RP1     ;BANCO DE LOS VALORES DE TEMP_ADC 
+004B   0870           00226                     MOVF            VAL_ADC, W
+004C   00A3           00227                     MOVWF           TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
+004D   01FC           00228                     CLRF            VAL_ADC_U       ;UNIDAD DEL VALOR A MOSTRAR
+004E   01FD           00229                     CLRF            VAL_ADC_D       ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
+004F   01FE           00230                     CLRF            VAL_ADC_C       ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
+0050   01FF           00231                     CLRF            VAL_ADC_M       ;UNIDAD DE MIL DEL VALOR A MOSTRAR (NO IMPLEMENTADO)
+                      00232                     
+0051   3064           00233 TEST_C              MOVLW           .100            ;CALCULA LA CENTENA
+0052   02A3           00234                     SUBWF           TEMP_VAL_ADC, F
+0053   1803           00235                     BTFSC           STATUS, C       ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUEL
+                            VA NEGATIVO (SOLO SE DA CUANDO LA CENTENA ES 0)
+0054   2???           00236                     GOTO            ADD_C
+0055   3064           00237                     MOVLW           .100          
+0056   07A3           00238                     ADDWF           TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR
+0057   2???           00239                     GOTO            TEST_D 
+                      00240                     
+0058   300A           00241 TEST_D              MOVLW           .10             ;CALCULA LA DECENA
+0059   02A3           00242                     SUBWF           TEMP_VAL_ADC, F
+005A   1803           00243                     BTFSC           STATUS, C       ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUEL
+                            VA NEGATIVO (SOLO SE DA CUANDO LA DECENA ES 0)
+005B   2???           00244                     GOTO            ADD_D
+005C   300A           00245                     MOVLW           .10                 
+005D   07A3           00246                     ADDWF           TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+005E   2???           00247                     GOTO            TEST_U
+                      00248                     
+005F   3001           00249 TEST_U              MOVLW           .1              ;CALCULA LA UNIDAD
+0060   02A3           00250                     SUBWF           TEMP_VAL_ADC, F
+0061   1803           00251                     BTFSC           STATUS, C       ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUEL
+                            VA NEGATIVO (SOLO SE DA CUANDO LA UNIDAD ES 0)
+0062   2???           00252                     GOTO            ADD_U
+0063   3001           00253                     MOVLW           .1                      
+0064   07A3           00254                     ADDWF           TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+                      00255                     
+0065   0008           00256                     RETURN      
+                      00257 
+0066   0AFE           00258 ADD_C               INCF            VAL_ADC_C, F
+0067   2???           00259                     GOTO            TEST_C
+                      00260 
+0068   0AFD           00261 ADD_D               INCF            VAL_ADC_D, F
+0069   2???           00262                     GOTO            TEST_D         
+                      00263 
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+006A   0AFC           00264 ADD_U               INCF            VAL_ADC_U, F
+006B   2???           00265                     GOTO            TEST_U
+                      00266                     
+                      00267 ;-----------------------------------------------------------------
+                      00268 ; DELAY5ms: retardo por software de 5ms usado para multiplexacion
+                      00269 ;       de displays 7 segmentos
+                      00270 ; Usado en: SHOW_ADC_DISPLAY
+                      00271 ;-----------------------------------------------------------------
+006C   1283           00272 DELAY5ms            BCF             STATUS, RP0
+006D   1303           00273                     BCF             STATUS, RP1     ;BANCO 0
+006E   3005           00274                     MOVLW           .5              ;m=5
+006F   00A0           00275                     MOVWF           DELAY1DSPL
+0070   3005           00276 DELAY1              MOVLW           .5              ;n=5
+0071   00A1           00277                     MOVWF           DELAY2DSPL
+0072   3041           00278 DELAY2              MOVLW           .65             ;p=65
+0073   00A2           00279                     MOVWF           DELAY3DSPL
+0074   0BA2           00280 DELAY3              DECFSZ          DELAY3DSPL, F
+0075   2???           00281                     GOTO            DELAY3
+0076   0BA1           00282                     DECFSZ          DELAY2DSPL, F
+0077   2???           00283                     GOTO            DELAY2
+0078   0BA0           00284                     DECFSZ          DELAY1DSPL, F
+0079   2???           00285                     GOTO            DELAY1
+007A   0008           00286                     RETURN
+                      00287                     
+                      00288 
+                      00289 ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSITIVA)
+007B   0782           00290 TABLA_DSPL          ADDWF           PCL, F
+007C   343F           00291                     RETLW           0X3F            ;0
+007D   3406           00292                     RETLW           0X06            ;1
+007E   345B           00293                     RETLW           0X5B            ;2
+007F   344F           00294                     RETLW           0X4F            ;3
+0080   3466           00295                     RETLW           0X66            ;4
+0081   346D           00296                     RETLW           0X6D            ;5
+0082   347D           00297                     RETLW           0X7D            ;6
+0083   3407           00298                     RETLW           0X07            ;7
+0084   347F           00299                     RETLW           0X7F            ;8
+0085   3467           00300                     RETLW           0X67            ;9   
+                      00301 
+                      00302                     
+                      00303 ;-------------------------
+                      00304 ; Subrutinas del teclado
+                      00305 ;-------------------------
+                      00306 ;LAYOUT TECLADO:
+                      00307 ; 1  2  3
+                      00308 ; 4  5  6
+                      00309 ; 7  8  9
+                      00310 ; *  0  #
+                      00311 ;
+                      00312 ;------------------------------------------------
+                      00313 ; ISR_TECLADO: Maneja interrupciones del teclado
+                      00314 ;   Detecta tecla presionada mediante barrido
+                      00315 ;   Maneja teclas especiales (* y #)
+                      00316 ;   Almacena valores numéricos para umbral
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00317 ;   Lógica antirrebote incorporada
+                      00318 ;------------------------------------------------
+0086   01F4           00319 ISR_TECLADO         CLRF            POS_TECLA
+                      00320                     
+0087   01F6           00321                     CLRF            TECLA_ACTIVA
+                      00322                     
+0088   3003           00323                     MOVLW           .3              ;VERIFICA QUE N_TECLA NO SUPERE 3
+0089   0275           00324                     SUBWF           N_TECLA, W
+008A   1903           00325                     BTFSC           STATUS,Z
+008B   01F5           00326                     CLRF            N_TECLA
+                      00327                     
+008C   1283 1303      00328                     BANKSEL         PORTB
+008E   30FE           00329                     MOVLW           B'11111110'
+008F   0086           00330                     MOVWF           PORTB
+0090   0000           00331                     NOP
+0091   2???           00332                     GOTO            TEST_COL
+                      00333                     
+                      00334         
+0092   0AF4           00335 TEST_COL            INCF            POS_TECLA, F
+0093   1E06           00336                     BTFSS           PORTB, RB4      ;TESTEA COLUMNA1
+0094   2???           00337                     GOTO            TECLA_PRES
+                      00338                     
+0095   0AF4           00339                     INCF            POS_TECLA, F
+0096   1E86           00340                     BTFSS           PORTB, RB5      ;TESTEA COLUMNA2
+0097   2???           00341                     GOTO            TECLA_PRES
+                      00342                     
+0098   0AF4           00343                     INCF            POS_TECLA, F
+0099   1F06           00344                     BTFSS           PORTB, RB6      ;TESTEA COLUMNA3
+009A   2???           00345                     GOTO            TECLA_PRES
+009B   2???           00346                     GOTO            CAMBIAR_FILA
+                      00347 
+009C   300C           00348 CAMBIAR_FILA        MOVLW           .12
+009D   0274           00349                     SUBWF           POS_TECLA, W
+009E   1903           00350                     BTFSC           STATUS, Z
+009F   2???           00351                     GOTO            FIN_ISR_TECLADO ;NO DETECTO TECLA, FINALIZA 
+00A0   1403           00352                     BSF             STATUS, C
+00A1   0D86           00353                     RLF             PORTB, F        ;MUEVE EL CERO A LA IZQUIERDA
+00A2   2???           00354                     GOTO            TEST_COL
+                      00355                     
+                      00356                     
+00A3   1E06           00357 TECLA_PRES          BTFSS           PORTB, RB4      ;ANTIREBOTE
+00A4   2???           00358                     GOTO            TECLA_PRES      ;----------
+00A5   1E86           00359                     BTFSS           PORTB, RB5      ;----------
+00A6   2???           00360                     GOTO            TECLA_PRES      ;----------
+00A7   1F06           00361                     BTFSS           PORTB, RB6      ;----------
+00A8   2???           00362                     GOTO            TECLA_PRES      ;ANTIREBOTE
+                      00363                     
+                      00364                     ; VERIFICA SI ES UNA TECLA ESPECIAL
+00A9   0874           00365                     MOVF            POS_TECLA, W
+00AA   00F6           00366                     MOVWF           TECLA_ACTIVA
+                      00367                 
+                      00368                     ; TECLA '*' (POSICION 10): CAMBIA DISPLAY
+00AB   300A           00369                     MOVLW           .10
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00AC   0276           00370                     SUBWF           TECLA_ACTIVA, W
+00AD   1903           00371                     BTFSC           STATUS, Z
+00AE   2???           00372                     GOTO            CAMBIAR_DSPL
+                      00373                 
+                      00374                     ; TECLA '#' (POSICION 12): ACTIVA/DESACTIVA ALARMA
+00AF   300C           00375                     MOVLW           .12
+00B0   0276           00376                     SUBWF           TECLA_ACTIVA, W
+00B1   1903           00377                     BTFSC           STATUS, Z
+00B2   2???           00378                     GOTO            CAMBIAR_ALARMA
+                      00379                 
+                      00380                     ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
+00B3   0AF5           00381                     INCF            N_TECLA, F
+00B4   3001           00382                     MOVLW           .1
+00B5   0275           00383                     SUBWF           N_TECLA, W
+00B6   1903           00384                     BTFSC           STATUS,Z
+00B7   2???           00385                     GOTO            CARGAR_UMBRAL_C
+                      00386                     
+00B8   3002           00387                     MOVLW           .2
+00B9   0275           00388                     SUBWF           N_TECLA, W
+00BA   1903           00389                     BTFSC           STATUS,Z
+00BB   2???           00390                     GOTO            CARGAR_UMBRAL_D
+                      00391                     
+00BC   3003           00392                     MOVLW           .3
+00BD   0275           00393                     SUBWF           N_TECLA, W
+00BE   1903           00394                     BTFSC           STATUS,Z
+00BF   2???           00395                     GOTO            CARGAR_UMBRAL_U
+                      00396                           
+00C0   2???           00397                     GOTO            FIN_ISR_TECLADO
+                      00398                     
+                      00399                     
+00C1                  00400 CARGAR_UMBRAL_C    
+00C1   0874           00401                     MOVF            POS_TECLA, W
+00C2   2???           00402                     CALL            TABLA_TECLADO
+00C3   00F3           00403                     MOVWF           VAL_UMBRAL_C
+00C4   2???           00404                     GOTO            FIN_ISR_TECLADO
+                      00405 
+00C5                  00406 CARGAR_UMBRAL_D    
+00C5   0874           00407                     MOVF            POS_TECLA, W
+00C6   2???           00408                     CALL            TABLA_TECLADO
+00C7   00F2           00409                     MOVWF           VAL_UMBRAL_D
+00C8   2???           00410                     GOTO            FIN_ISR_TECLADO
+                      00411                     
+00C9                  00412 CARGAR_UMBRAL_U     
+00C9   0874           00413                     MOVF            POS_TECLA, W
+00CA   2???           00414                     CALL            TABLA_TECLADO
+00CB   00F1           00415                     MOVWF           VAL_UMBRAL_U
+00CC   2???           00416                     GOTO            FIN_ISR_TECLADO
+                      00417 
+                      00418 ;----------------------------------------------
+                      00419 ; CAMBIAR_DSPL: Alterna modo de visualización
+                      00420 ;   Alterna BIT 0 de OPCIONES:
+                      00421 ;     0 = Muestra valores del ADC
+                      00422 ;     1 = Muestra valores del teclado (umbral)
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00423 ;----------------------------------------------
+00CD                  00424 CAMBIAR_DSPL        
+00CD   3001           00425                     MOVLW           B'00000001'
+00CE   06F7           00426                     XORWF           OPCIONES, F                    
+00CF   2???           00427                     GOTO            FIN_ISR_TECLADO
+                      00428 
+                      00429 ;-----------------------------------------
+                      00430 ; CAMBIAR_ALARMA: Activa/desactiva alarma
+                      00431 ;   Alterna BIT 1 de OPCIONES:
+                      00432 ;     0 = Alarma desactivada
+                      00433 ;     1 = Alarma activada
+                      00434 ;   Control físico en RC0
+                      00435 ;-----------------------------------------
+00D0                  00436 CAMBIAR_ALARMA      
+00D0   3002           00437                     MOVLW           B'00000010'     
+00D1   06F7           00438                     XORWF           OPCIONES, F    
+00D2   2???           00439                     GOTO            FIN_ISR_TECLADO
+                      00440                                                         
+00D3                  00441 MOSTRAR_TECLADO    
+00D3   1283 1303      00442                     BANKSEL         PORTA           
+00D5   3001           00443                     MOVLW           B'00000001'
+00D6   0085           00444                     MOVWF           PORTA           ;ACTIVA DISPLAY 1 Y DESACTIVA LOS DEMAS
+00D7   0871           00445                     MOVF            VAL_UMBRAL_U, W
+00D8   2???           00446                     CALL            TABLA_DSPL      
+00D9   0088           00447                     MOVWF           PORTD           ;CARGA EL VALOR DE LA UNIDAD EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+00DA   2???           00448                     CALL            DELAY5ms        
+                      00449                     
+00DB   3002           00450                     MOVLW           B'00000010'
+00DC   0085           00451                     MOVWF           PORTA           ;ACTIVA DISPLAY 2 Y DESACTIVA LOS DEMAS
+00DD   0872           00452                     MOVF            VAL_UMBRAL_D, W
+00DE   2???           00453                     CALL            TABLA_DSPL
+00DF   0088           00454                     MOVWF           PORTD           ;CARGA EL VALOR DE LA DECENA EN EL DISPLAY CON SU CO
+                            RRESPONDIENTE FORMATO
+00E0   2???           00455                     CALL            DELAY5ms
+                      00456 
+00E1   3004           00457                     MOVLW           B'00000100'
+00E2   0085           00458                     MOVWF           PORTA           ;ACTIVA DISPLAY 3 Y DESACTIVA LOS DEMAS
+00E3   0873           00459                     MOVF            VAL_UMBRAL_C, W
+00E4   2???           00460                     CALL            TABLA_DSPL
+00E5   0088           00461                     MOVWF           PORTD           ;CARGA EL VALOR DE LA CENTENA EN EL DISPLAY CON SU C
+                            ORRESPONDIENTE FORMATO
+00E6   2???           00462                     CALL            DELAY5ms
+                      00463                     
+00E7   3008           00464                     MOVLW           B'00001000'
+00E8   0085           00465                     MOVWF           PORTA           ;ACTIVA DISPLAY 4 Y DESACTIVA LOS DEMAS
+00E9   3000           00466                     MOVLW           .0
+00EA   2???           00467                     CALL            TABLA_DSPL
+00EB   0088           00468                     MOVWF           PORTD           
+00EC   2???           00469                     CALL            DELAY5ms
+                      00470                     
+00ED   0008           00471                     RETURN
+                      00472                     
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00EE                  00473 FIN_ISR_TECLADO     
+00EE   3070           00474                     MOVLW           B'01110000'
+00EF   0086           00475                     MOVWF           PORTB
+00F0   100B           00476                     BCF             INTCON, RBIF
+00F1   0008           00477                     RETURN  
+                      00478                     
+00F2                  00479 TABLA_TECLADO       
+00F2   0782           00480                     ADDWF           PCL, F
+00F3   0000           00481                     NOP                             ;   NO DEBERIA LLEGAR A ESTA LINEA
+00F4   3401           00482                     RETLW           .1              ;1
+00F5   3402           00483                     RETLW           .2              ;2
+00F6   3403           00484                     RETLW           .3              ;3
+00F7   3404           00485                     RETLW           .4              ;4
+00F8   3405           00486                     RETLW           .5              ;5
+00F9   3406           00487                     RETLW           .6              ;6
+00FA   3407           00488                     RETLW           .7              ;7
+00FB   3408           00489                     RETLW           .8              ;8
+00FC   3409           00490                     RETLW           .9              ;9
+00FD   34FF           00491                     RETLW           0XFF            ;*  NO DEBERIA LLEGAR A ESTA LINEA
+00FE   3400           00492                     RETLW           .0              ;0
+00FF   34FE           00493                     RETLW           0XFE            ;#  NO DEBERIA LLEGAR A ESTA LINEA
+                      00494                     
+                      00495 ;--------------------------
+                      00496 ; Subrutinas de la alarma
+                      00497 ;--------------------------
+                      00498 ;----------------------------------------------------------
+                      00499 ; CHECK_ALARMA: Verifica que el valor del adc sea menor
+                      00500 ;                  que el del valor umbral, y en base a eso
+                      00501 ;                  edita el bit 1 del registro opciones
+                      00502 ;----------------------------------------------------------
+0100                  00503 CHECK_ALARMA
+0100   0873           00504                     MOVF            VAL_UMBRAL_C, W
+0101   027E           00505                     SUBWF           VAL_ADC_C, W        ; VAL_ADC_C - VAL_UMBRAL_C
+0102   1C03           00506                     BTFSS           STATUS, C           ; Si C=0 (VAL_ADC_C < VAL_UMBRAL_C)
+0103   2???           00507                     GOTO            ALARMA_ON           ; Centena ADC menor que umbral -> Activar
+                      00508 
+0104   1D03           00509                     BTFSS           STATUS, Z           ; Si Z=1 (VAL_ADC_C = VAL_UMBRAL_C)
+0105   2???           00510                     GOTO            ALARMA_OFF          ; Centena ADC mayor que umbral -> Desactivar
+                      00511 
+                      00512                     ; Si centenas iguales, comparar DECENAS
+0106   0872           00513                     MOVF            VAL_UMBRAL_D, W
+0107   027D           00514                     SUBWF           VAL_ADC_D, W        ; VAL_ADC_D - VAL_UMBRAL_D
+0108   1C03           00515                     BTFSS           STATUS, C           ; Si C=0 (VAL_ADC_D < VAL_UMBRAL_D)
+0109   2???           00516                     GOTO            ALARMA_ON           ; Decena ADC menor que umbral -> Activar
+                      00517 
+010A   1D03           00518                     BTFSS           STATUS, Z           ; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
+010B   2???           00519                     GOTO            ALARMA_OFF          ; Decena ADC mayor que umbral -> Desactivar
+                      00520 
+                      00521                     ; Si decenas iguales, comparar UNIDADES
+010C   0871           00522                     MOVF            VAL_UMBRAL_U, W
+010D   027C           00523                     SUBWF           VAL_ADC_U, W        ; VAL_ADC_U - VAL_UMBRAL_U
+010E   1C03           00524                     BTFSS           STATUS, C           ; Si C=0 (VAL_ADC_U < VAL_UMBRAL_U)
+010F   2???           00525                     GOTO            ALARMA_ON           ; Unidad ADC menor que umbral -> Activar
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0110   2???           00526                     GOTO            ALARMA_OFF          ; Unidad ADC mayor que umbral -> Desactivar
+                      00527 
+0111   14F7           00528 ALARMA_ON           BSF             OPCIONES, 1         ; Setear bit de estado de alarma
+0112   0008           00529                     RETURN
+                      00530 
+0113   10F7           00531 ALARMA_OFF          BCF             OPCIONES, 1         ; Limpiar bit de estado de alarma               
+0114   0008           00532                     RETURN
+                      00533                     
+                      00534 ; Togglea entre alarma activada y desactivada
+0115                  00535 TEST_ALARMA         
+0115   1283 1303      00536                     BANKSEL         PORTC
+0117   1977           00537                     BTFSC           OPCIONES, 2         ;Verifica que la alarma este activada
+0118   2???           00538                     CALL            VERIFICAR_ALARMA    ;Si esta activada entonces verifica el valor del
+                             estado de la alarma
+0119   1D77           00539                     BTFSS           OPCIONES, 2         
+011A   1007           00540                     BCF             PORTC, 0            ;Si no esta activada entonces ignora todo y desa
+                            ctiva la alarma
+011B   0008           00541                     RETURN
+                      00542                     
+                      00543 ;Verifica el estado de la alarma y en base al estado activa o desactiva la alarma
+011C                  00544 VERIFICAR_ALARMA    
+011C   18F7           00545                     BTFSC           OPCIONES, 1 
+011D   1407           00546                     BSF             PORTC, 0
+011E   1CF7           00547                     BTFSS           OPCIONES, 1
+011F   1007           00548                     BCF             PORTC, 0
+0120   0008           00549                     RETURN
+                      00550                                  
+                      00551 
+                      00552 ;-------------------------
+                      00553 ; Servicio de interrupcion
+                      00554 ;-------------------------
+                      00555                     ;SALVADO DE CONTEXTO
+0121                  00556 ISR                 
+0121   00FA           00557                     MOVWF           W_TEMP
+0122   0E03           00558                     SWAPF           STATUS, W
+0123   00FB           00559                     MOVWF           STATUS_TEMP
+                      00560                     ;FIN DE SALVADO DE CONTEXTO
+                      00561                     ;INICIO ISR                 FUENTES DE INTERRUPCION: PUERTO B(TECLADO), TIMER0(ADC)
+0124   180B           00562                     BTFSC           INTCON, RBIF
+0125   2???           00563                     CALL            ISR_TECLADO
+                      00564                     ;RECUPERACION DE CONTEXTO
+0126   0E7B           00565                     SWAPF           STATUS_TEMP, W
+0127   0083           00566                     MOVWF           STATUS
+0128   0EFA           00567                     SWAPF           W_TEMP, F
+0129   0EFA           00568                     SWAPF           W_TEMP, F
+                      00569                     ;FIN DE RECUPERACION DE CONTEXTO
+012A   0009           00570                     RETFIE
+                      00571                     
+                      00572                     
+2FF1                  00573                     END
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ABDEN                             00000000
+ABDOVF                            00000007
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADD_C                             00000066
+ADD_D                             00000068
+ADD_U                             0000006A
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ALARMA_OFF                        00000113
+ALARMA_ON                         00000111
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+BAUDCTL                           00000187
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CAMBIAR_ALARMA                    000000D0
+CAMBIAR_DSPL                      000000CD
+CAMBIAR_FILA                      0000009C
+CARGAR_UMBRAL_C                   000000C1
+CARGAR_UMBRAL_D                   000000C5
+CARGAR_UMBRAL_U                   000000C9
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHECK_ALARMA                      00000100
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CKE                               00000006
+CKP                               00000004
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+CONF_ALARMA                       
+CONF_DISPLAY                      
+CONF_INTERRUPCION                 
+CONF_TECLADO                      
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DELAY1                            00000070
+DELAY1DSPL                        00000020
+DELAY2                            00000072
+DELAY2DSPL                        00000021
+DELAY3                            00000074
+DELAY3DSPL                        00000022
+DELAY5ms                          0000006C
+DESCOMP_VAL_ADC                   00000049
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+EEIF                              00000004
+EEPGD                             00000007
+F                                 00000001
+FERR                              00000002
+FIN_ISR_TECLADO                   000000EE
+FSR                               00000004
+FVREN                             00000000
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HTS                               00000002
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INICIO                            00000005
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+ISR                               00000121
+ISR_TECLADO                       00000086
+LTS                               00000001
+MC1OUT                            00000007
+MC2OUT                            00000006
+MOSTRAR_TECLADO                   000000D3
+MSK                               00000093
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+N_TECLA                           00000075
+OERR                              00000001
+OPCIONES                          00000077
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+POS_TECLA                         00000074
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PWM1CON                           0000009B
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+REFRESH                           00000028
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SEN                               00000000
+SENDB                             00000003
+SHOW_ADC_DISPLAY                  0000002D
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STATUS_TEMP                       0000007B
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SWDTEN                            00000000
+SYNC                              00000004
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 20
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TABLA_DSPL                        0000007B
+TABLA_TECLADO                     000000F2
+TECLA_ACTIVA                      00000076
+TECLA_PRES                        000000A3
+TEMP_VAL_ADC                      00000023
+TEST_ALARMA                       00000115
+TEST_C                            00000051
+TEST_COL                          00000092
+TEST_D                            00000058
+TEST_U                            0000005F
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 21
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+VAL_ADC                           00000070
+VAL_ADC_C                         0000007E
+VAL_ADC_D                         0000007D
+VAL_ADC_M                         0000007F
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 22
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+VAL_ADC_U                         0000007C
+VAL_UMBRAL_C                      00000073
+VAL_UMBRAL_D                      00000072
+VAL_UMBRAL_U                      00000071
+VCFG0                             00000004
+VCFG1                             00000005
+VERIFICAR_ALARMA                  0000011C
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+W_TEMP                            0000007A
+Z                                 00000002
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+_CPD_OFF                          00003FFF
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+
+MPASM 5.81         PRUEBA_MODULO_TECLADO.ASM   6-20-2025  12:58:46         PAGE 24
+
+
+
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     8 reported,     0 suppressed
+
+

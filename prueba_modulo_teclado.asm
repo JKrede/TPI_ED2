@@ -14,11 +14,16 @@
 		    __CONFIG _CONFIG1, _XT_OSC & _WDTE_OFF & _MCLRE_ON & _LVP_OFF
 
 		    
-;-------------------------------------------------------------------------------------
-; PRUEBA: INICIAR EL SISTEMA Y CAMBIAR LOS VALORES DE UMBRAL DE 888D ESTABLECIDOS
-;	POR DEFECTO DENTRO DEL PROGRAMA A 123D MEDIANTE EL TECLADO Y ADEMAS VERIFICAR
-;	EL FUNCIONAMIENTO DE LAS TECLAS ESPECIALES (* Y #)
-;-------------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------------
+; PRUEBA: INICIAR EL SISTEMA Y VERIFICAR EL CORRECTO FUNCIONAMIENTO DEL TECLADO MEDIANTE
+;	  EL SUBSISTEMA DE VISUALIZACION DE DATOS (DISPLAYS 7 SEGMENTOS) Y EL SUBSISTEMA
+;	  DE SEÑALIZACION OPTICA Y ACUSTICA
+;   PRUEBAS:
+;   1. Utilizando la tecla * intercambiar entre los modos del subsistema de visualizacion de datos
+;   2. Utilizando las teclas 0-9 cambiar el valor umbral
+;   3. Cambiar el valor umbral a un valor menor al valor de ADC y utilizar la tecla # para encender
+;	y apagar la alarma
+;------------------------------------------------------------------------------------------------------
 		    	    
 		    
 ;-------------------------
@@ -41,9 +46,8 @@ N_TECLA       EQU   0x75    ; Contador de teclas presionadas (1-3)
 TECLA_ACTIVA  EQU   0x76    ; Tecla actualmente presionada
 OPCIONES      EQU   0x77    ; Registro de opciones:
 			     ;   BIT 0: Modo display (0=ADC, 1=Teclado)
-			     ;   BIT 1: Estado alarma (0=OFF, 1=ON)
-DELAY1TMR0    EQU   0x78    ; Contador delay para ADC (primer nivel)
-DELAY2TMR0    EQU   0x79    ; Contador delay para ADC (segundo nivel)
+			     ;   BIT 1: Estado alarma (0=NO DISPARADA, 1=DISPARADA)
+			     ;	 BIT 2: Activar/Desactivar Alarma (0=OFF, 1=ON)
 W_TEMP        EQU   0x7A    ; Backup de W durante ISR
 STATUS_TEMP   EQU   0x7B    ; Backup de STATUS durante ISR
 VAL_ADC_U     EQU   0x7C    ; Unidades del valor ADC (0-9)
@@ -62,7 +66,8 @@ VAL_ADC_M     EQU   0x7F    ; Unidades de mil del valor ADC
 ; CONFIG_TECLADO: Configura el puerto B para teclado matricial
 ;   - RB0-RB3 como salidas (filas)
 ;   - RB4-RB6 como entradas con pull-up (columnas)
-;   - Habilita interrupciones por cambio en RB4-RB6
+;   - Habilita interrupciones por cambio en puerto B
+;----------------------------------------------------------------
 CONF_TECLADO	    MACRO
 
     BANKSEL	    ANSELH
@@ -118,7 +123,23 @@ CONF_INTERRUPCION	    MACRO
     MOVWF	    IOCB
 
     ENDM
+    
+;----------------------------------------------------------------
+; CONFIGURACIÓN DE ALARMA
+;----------------------------------------------------------------
+; Configura RC0 como salida para controlar la alarma:
+;   - Puede ser un LED, buzzer o relay
+;   - Inicialmente apagada
+;----------------------------------------------------------------
+CONF_ALARMA		    MACRO
+    BANKSEL	    TRISC
+    BCF		    TRISC, 0     ; RC0 como salida
 
+    BANKSEL	    PORTC
+    BCF		    PORTC, 0     ; Apaga la alarma inicialmente
+
+    ENDM
+    
 ;-------------------------
 ; Código principal
 ;-------------------------
@@ -151,59 +172,7 @@ REFRESH		    BTFSC	    OPCIONES, 0
 ;-------------------------- 
 ; Subrutinas del display
 ;--------------------------
-;----------------------------------------------------------
-; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
-;   Entrada: VAL_ADC (valor a descomponer)
-;   Salida:  VAL_ADC_U (unidades)
-;            VAL_ADC_D (decenas)
-;            VAL_ADC_C (centenas)
-;            VAL_ADC_M (unidades de mil, siempre 0)
-;   Altera:  W, STATUS
-;----------------------------------------------------------
-
-DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
-		    MOVF	    VAL_ADC, W
-		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
-		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_D	    ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_C	    ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_M	    ;NUNCA VALE DISTINTO DE CERO
 		    
-TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_C
-		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    GOTO	    TEST_D 
-		    
-TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_D
-		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    GOTO	    TEST_U
-		    
-TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_U
-		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    
-		    RETURN	
-
-ADD_C		    INCF	    VAL_ADC_C, F
-		    GOTO	    TEST_C
-
-ADD_D		    INCF	    VAL_ADC_D, F
-		    GOTO	    TEST_D	   
-
-ADD_U		    INCF	    VAL_ADC_U, F
-		    GOTO	    TEST_U
-	
 ;------------------------------------------------
 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
@@ -240,9 +209,66 @@ SHOW_ADC_DISPLAY    CALL	    DESCOMP_VAL_ADC
 		    CALL	    TABLA_DSPL
 		    MOVWF	    PORTD	    ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CON SU CORRESPONDIENTE FORMATO
 		    CALL	    DELAY5ms
-		    RETURN
+		    RETURN		    
 		    
-		    ;DELAY DE 5ms USADO PARA MOSTRAR VALORES EN DISPLAY (SHOW_DISPLAY)
+		    	    
+;----------------------------------------------------------
+; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
+;   Entrada: VAL_ADC (valor a descomponer)
+;   Salida:  VAL_ADC_U (unidades)
+;            VAL_ADC_D (decenas)
+;            VAL_ADC_C (centenas)
+;            VAL_ADC_M (unidades de mil, siempre 0)
+;   Altera:  W, STATUS
+;----------------------------------------------------------
+DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE TEMP_ADC 
+		    MOVF	    VAL_ADC, W
+		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
+		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_D	    ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_C	    ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_M	    ;UNIDAD DE MIL DEL VALOR A MOSTRAR (NO IMPLEMENTADO)
+		    
+TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA CENTENA ES 0)
+		    GOTO	    ADD_C
+		    MOVLW	    .100          
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR
+		    GOTO	    TEST_D 
+		    
+TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA DECENA ES 0)
+		    GOTO	    ADD_D
+		    MOVLW	    .10	    	        
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+		    GOTO	    TEST_U
+		    
+TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA UNIDAD ES 0)
+		    GOTO	    ADD_U
+		    MOVLW	    .1		            
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+		    
+		    RETURN	
+
+ADD_C		    INCF	    VAL_ADC_C, F
+		    GOTO	    TEST_C
+
+ADD_D		    INCF	    VAL_ADC_D, F
+		    GOTO	    TEST_D	   
+
+ADD_U		    INCF	    VAL_ADC_U, F
+		    GOTO	    TEST_U
+		    
+;-----------------------------------------------------------------
+; DELAY5ms: retardo por software de 5ms usado para multiplexacion
+;	de displays 7 segmentos
+; Usado en: SHOW_ADC_DISPLAY
+;-----------------------------------------------------------------
 DELAY5ms	    BCF		    STATUS, RP0
 		    BCF		    STATUS, RP1	    ;BANCO 0
 		    MOVLW	    .5		    ;m=5
@@ -260,7 +286,7 @@ DELAY3		    DECFSZ	    DELAY3DSPL, F
 		    RETURN
 		    
 
-		    ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSITIVA)
+;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSITIVA)
 TABLA_DSPL	    ADDWF	    PCL, F
 		    RETLW	    0X3F	    ;0
 		    RETLW	    0X06	    ;1
@@ -322,18 +348,18 @@ TEST_COL	    INCF	    POS_TECLA, F
 CAMBIAR_FILA	    MOVLW	    .12
 		    SUBWF	    POS_TECLA, W
 		    BTFSC	    STATUS, Z
-		    GOTO	    FIN_ISR_TECLADO ;FINALIZA 
+		    GOTO	    FIN_ISR_TECLADO ;NO DETECTO TECLA, FINALIZA 
 		    BSF		    STATUS, C
 		    RLF		    PORTB, F	    ;MUEVE EL CERO A LA IZQUIERDA
 		    GOTO	    TEST_COL
 		    
 		    
-TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
-		    GOTO	    TECLA_PRES	    ;
-		    BTFSS	    PORTB, RB5	    ;ANTIREBOTE
-		    GOTO	    TECLA_PRES	    ;ANTIREBOTE
-		    BTFSS	    PORTB, RB6	    ;
+TECLA_PRES	    BTFSS	    PORTB, RB4	    ;ANTIREBOTE
 		    GOTO	    TECLA_PRES	    ;----------
+		    BTFSS	    PORTB, RB5	    ;----------
+		    GOTO	    TECLA_PRES	    ;----------
+		    BTFSS	    PORTB, RB6	    ;----------
+		    GOTO	    TECLA_PRES	    ;ANTIREBOTE
 		    
 		    ; VERIFICA SI ES UNA TECLA ESPECIAL
 		    MOVF	    POS_TECLA, W
@@ -354,17 +380,17 @@ TECLA_PRES	    BTFSS	    PORTB, RB4	    ;----------
 		    ; SI NO ERA TECLA ESPECIAL ENTONCES SIGUE Y CARGA VALORES
 		    INCF	    N_TECLA, F
 		    MOVLW	    .1
-		    SUBWF	    N_TECLA,W
+		    SUBWF	    N_TECLA, W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_C
 		    
 		    MOVLW	    .2
-		    SUBWF	    N_TECLA,W
+		    SUBWF	    N_TECLA, W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_D
 		    
 		    MOVLW	    .3
-		    SUBWF	    N_TECLA,W
+		    SUBWF	    N_TECLA, W
 		    BTFSC	    STATUS,Z
 		    GOTO	    CARGAR_UMBRAL_U
 		          
@@ -408,35 +434,10 @@ CAMBIAR_DSPL
 ;   Control físico en RC0
 ;-----------------------------------------
 CAMBIAR_ALARMA	    
-		    MOVLW	    B'00000010'	    
+		    MOVLW	    B'00000100'	    
 		    XORWF	    OPCIONES, F    
 		    GOTO	    FIN_ISR_TECLADO
-		    		    
-FIN_ISR_TECLADO	    
-		    MOVLW	    B'00001111'
-		    MOVWF	    PORTB
-		    BCF		    INTCON, RBIF
-		    RETURN  
-		    
-		    
-TABLA_TECLADO	    
-		    ADDWF	    PCL, F
-		    NOP				    ;   NO DEBERIA LLEGAR A ESTA LINEA
-		    RETLW	    .1		    ;1
-		    RETLW	    .2		    ;2
-		    RETLW	    .3		    ;3
-		    RETLW	    .4		    ;4
-		    RETLW	    .5		    ;5
-		    RETLW	    .6		    ;6
-		    RETLW	    .7		    ;7
-		    RETLW	    .8		    ;8
-		    RETLW	    .9		    ;9
-		    RETLW	    0XFF	    ;*	NO DEBERIA LLEGAR A ESTA LINEA
-		    RETLW	    .0		    ;0
-		    RETLW	    0XFE	    ;#	NO DEBERIA LLEGAR A ESTA LINEA
-		    
-		    
-		        
+		    		    		        
 MOSTRAR_TECLADO	   
 		    BANKSEL	    PORTA	    
 		    MOVLW	    B'00000001'
@@ -468,7 +469,85 @@ MOSTRAR_TECLADO
 		    CALL	    DELAY5ms
 		    
 		    RETURN
-		 
+		    
+FIN_ISR_TECLADO	    
+		    MOVLW	    B'01110000'
+		    MOVWF	    PORTB
+		    BCF		    INTCON, RBIF
+		    RETURN  
+		    
+TABLA_TECLADO	    
+		    ADDWF	    PCL, F
+		    NOP				    ;   NO DEBERIA LLEGAR A ESTA LINEA
+		    RETLW	    .1		    ;1
+		    RETLW	    .2		    ;2
+		    RETLW	    .3		    ;3
+		    RETLW	    .4		    ;4
+		    RETLW	    .5		    ;5
+		    RETLW	    .6		    ;6
+		    RETLW	    .7		    ;7
+		    RETLW	    .8		    ;8
+		    RETLW	    .9		    ;9
+		    RETLW	    0XFF	    ;*	NO DEBERIA LLEGAR A ESTA LINEA
+		    RETLW	    .0		    ;0
+		    RETLW	    0XFE	    ;#	NO DEBERIA LLEGAR A ESTA LINEA
+		    
+;--------------------------
+; Subrutinas de la alarma
+;--------------------------
+;----------------------------------------------------------
+; CHECK_ALARMA: Verifica que el valor del adc sea menor
+;		   que el del valor umbral, y en base a eso
+;		   edita el bit 1 del registro opciones
+;----------------------------------------------------------
+CHECK_ALARMA
+		    MOVF	    VAL_UMBRAL_C, W
+		    SUBWF	    VAL_ADC_C, W	; VAL_ADC_C - VAL_UMBRAL_C
+		    BTFSS	    STATUS, C		; Si C=0 (VAL_ADC_C < VAL_UMBRAL_C)
+		    GOTO	    ALARMA_ON		; Centena ADC menor que umbral -> Activar
+
+		    BTFSS	    STATUS, Z		; Si Z=1 (VAL_ADC_C = VAL_UMBRAL_C)
+		    GOTO	    ALARMA_OFF		; Centena ADC mayor que umbral -> Desactivar
+
+		    ; Si centenas iguales, comparar DECENAS
+		    MOVF	    VAL_UMBRAL_D, W
+		    SUBWF	    VAL_ADC_D, W	; VAL_ADC_D - VAL_UMBRAL_D
+		    BTFSS	    STATUS, C		; Si C=0 (VAL_ADC_D < VAL_UMBRAL_D)
+		    GOTO	    ALARMA_ON		; Decena ADC menor que umbral -> Activar
+
+		    BTFSS	    STATUS, Z		; Si Z=1 (VAL_ADC_D = VAL_UMBRAL_D)
+		    GOTO	    ALARMA_OFF		; Decena ADC mayor que umbral -> Desactivar
+
+		    ; Si decenas iguales, comparar UNIDADES
+		    MOVF	    VAL_UMBRAL_U, W
+		    SUBWF	    VAL_ADC_U, W	; VAL_ADC_U - VAL_UMBRAL_U
+		    BTFSS	    STATUS, C		; Si C=0 (VAL_ADC_U < VAL_UMBRAL_U)
+		    GOTO	    ALARMA_ON		; Unidad ADC menor que umbral -> Activar
+		    GOTO	    ALARMA_OFF		; Unidad ADC mayor que umbral -> Desactivar
+
+ALARMA_ON	    BSF		    OPCIONES, 1		; Setear bit de estado de alarma
+		    RETURN
+
+ALARMA_OFF	    BCF		    OPCIONES, 1		; Limpiar bit de estado de alarma		
+		    RETURN
+		    
+; Togglea entre alarma activada y desactivada
+TEST_ALARMA	    
+		    BANKSEL	    PORTC
+		    BTFSC	    OPCIONES, 2		;Verifica que la alarma este activada
+		    CALL   	    VERIFICAR_ALARMA	;Si esta activada entonces verifica el valor del estado de la alarma
+		    BTFSS	    OPCIONES, 2		
+		    BCF		    PORTC, 0		;Si no esta activada entonces ignora todo y desactiva la alarma
+		    RETURN
+		    
+;Verifica el estado de la alarma y en base al estado activa o desactiva la alarma
+VERIFICAR_ALARMA    
+		    BTFSC	    OPCIONES, 1	
+		    BSF		    PORTC, 0
+		    BTFSS	    OPCIONES, 1
+		    BCF		    PORTC, 0
+		    RETURN
+		    		 
 
 ;-------------------------
 ; Servicio de interrupcion
@@ -486,7 +565,7 @@ ISR
 		    SWAPF	    STATUS_TEMP, W
 		    MOVWF	    STATUS
 		    SWAPF	    W_TEMP, F
-		    SWAPF	    W_TEMP, F
+		    SWAPF	    W_TEMP, W
 		    ;FIN DE RECUPERACION DE CONTEXTO
 		    RETFIE
 		    

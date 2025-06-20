@@ -12,6 +12,8 @@
 ;----------------------------------------------------------------------
 ; PRUEBA: INICIAR EL SISTEMA Y ENVIAR MEDIANTE EL MODULO UART EL NUMERO
 ;	141D DE MANERA CONTINUA AL PC
+; RESULTADO ESPERADO: EN EL RECEPTOR (PC) DEBE OBSERVARSE LA LLEGA DE
+;	MANERA CONTINUA DEL DATO 141D
 ;----------------------------------------------------------------------
     
 
@@ -79,7 +81,7 @@ INICIO		    ;INICIO PROGRAMA
 		    MOVWF	    VAL_ADC_C
 		    MOVWF	    VAL_ADC_U
 		    MOVLW	    .4
-		    MOVWF	    VAL_ADC_D
+		    MOVWF	    VAL_ADC_D	    ;VALOR A ENVIAR: 141D
 		    
 REFRESH		    CALL	    ENVIAR_INFO
 		    GOTO	    REFRESH
@@ -87,8 +89,14 @@ REFRESH		    CALL	    ENVIAR_INFO
 ;------------------------------------
 ; Subrutinas de comunicacion serial
 ;------------------------------------
-		    ;REALIZA EL ENVIO DEL VALOR OBTENIDO DEL ADC CODIFICADO EN CODIGO ASCII.
-ENVIAR_INFO	    MOVF	    VAL_ADC_C, W
+
+;--------------------------------------------------------------
+;ENVIAR_INFO: Realiza el envio del valor almacenado en la 
+;	variable VAL_ADC codificada en codigo ASCII, con salto
+;	de linea y retorno de carro incluido entre valores
+;--------------------------------------------------------------
+ENVIAR_INFO	    ;CALL	    DESCOMP_VAL_ADC
+		    MOVF	    VAL_ADC_C, W
 		    ADDLW	    .48
 		    CALL	    UART_TX	    ;ENVIA CENTENA
 		    
@@ -113,7 +121,7 @@ UART_TX
 		    BTFSS	    TXSTA, TRMT	    ;VERIFICA QUE EL TSR ESTE VACIO
 		    GOTO	    UART_TX
 		    BANKSEL	    TXREG
-		    MOVWF	    TXREG	    
+		    MOVWF	    TXREG	    ;LUEGO DE ESTO SE ENVIA SOLO... EN TEORIA
 		    RETURN
 	    
 		    END

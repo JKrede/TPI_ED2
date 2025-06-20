@@ -8,9 +8,10 @@
 ;
 ;------------------------------------------------------------
 
-;-------------------------------------------------------------------    
-; PRUEBA: VERIFICA QUE SE MUESTRE CORRECTAMENTE EL VALOR 0084 EN EL
-;	DISPLAY DE 7 SEGMENTOS.
+;-------------------------------------------------------------------
+; PRUEBA: VERIFICAR EL CORRECTO FUNCIONAMIENTO DE 4 DISPLAYS 
+;	DE 7 SEGMENTOS MULTIPLEXADOS
+; RESULTADO ESPERADO: DEBE MOSTRARSE EL NUMERO 0184D EN LOS DISPLAYS
 ;-------------------------------------------------------------------
     
 		    
@@ -70,7 +71,7 @@ INICIO		    ;INICIO PROGRAMA
 			
 		    CONF_DISPLAY
 
-		    MOVLW	    .84		   ; numero a mostrar
+		    MOVLW	    .184		   
 		    MOVWF	    VAL_ADC
 REFRESH		    
 		    CALL	    SHOW_ADC_DISPLAY
@@ -80,59 +81,7 @@ REFRESH
 ;-------------------------- 
 ; Subrutinas del display
 ;--------------------------
-;----------------------------------------------------------
-; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
-;   Entrada: VAL_ADC (valor a descomponer)
-;   Salida:  VAL_ADC_U (unidades)
-;            VAL_ADC_D (decenas)
-;            VAL_ADC_C (centenas)
-;            VAL_ADC_M (unidades de mil, siempre 0)
-;   Altera:  W, STATUS
-;----------------------------------------------------------
-
-DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
-		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE ADC 
-		    MOVF	    VAL_ADC, W
-		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
-		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_D	    ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_C	    ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
-		    CLRF	    VAL_ADC_M	    ;NUNCA VALE DISTINTO DE CERO
 		    
-TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_C
-		    MOVLW	    .100	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    GOTO	    TEST_D 
-		    
-TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_D
-		    MOVLW	    .10	    	    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    GOTO	    TEST_U
-		    
-TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
-		    SUBWF	    TEMP_VAL_ADC, F
-		    BTFSC	    STATUS, C
-		    GOTO	    ADD_U
-		    MOVLW	    .1		    ;SI ES NEGATIVO RECUPERA EL VALOR ORIGINAL (SOLO SE DA CUANDO ES 0)          
-		    ADDWF	    TEMP_VAL_ADC, F 
-		    
-		    RETURN	
-
-ADD_C		    INCF	    VAL_ADC_C, F
-		    GOTO	    TEST_C
-
-ADD_D		    INCF	    VAL_ADC_D, F
-		    GOTO	    TEST_D	   
-
-ADD_U		    INCF	    VAL_ADC_U, F
-		    GOTO	    TEST_U
-	
 ;------------------------------------------------
 ; SHOW_ADC_DISPLAY: Muestra valor ADC en displays
 ;   Usa: VAL_ADC_U, VAL_ADC_D, VAL_ADC_C
@@ -169,9 +118,66 @@ SHOW_ADC_DISPLAY    CALL	    DESCOMP_VAL_ADC
 		    CALL	    TABLA_DSPL
 		    MOVWF	    PORTD	    ;CARGA EL VALOR DE LA UNIDAD DE MIL EN EL DISPLAY CON SU CORRESPONDIENTE FORMATO
 		    CALL	    DELAY5ms
-		    RETURN
+		    RETURN		    
 		    
-		    ;DELAY DE 5ms USADO PARA MOSTRAR VALORES EN DISPLAY (SHOW_DISPLAY)
+		    	    
+;----------------------------------------------------------
+; DESCOMP_VAL_ADC: Descompone valor ADC (0-255) en dígitos
+;   Entrada: VAL_ADC (valor a descomponer)
+;   Salida:  VAL_ADC_U (unidades)
+;            VAL_ADC_D (decenas)
+;            VAL_ADC_C (centenas)
+;            VAL_ADC_M (unidades de mil, siempre 0)
+;   Altera:  W, STATUS
+;----------------------------------------------------------
+DESCOMP_VAL_ADC	    BCF		    STATUS, RP0
+		    BCF		    STATUS, RP1	    ;BANCO DE LOS VALORES DE TEMP_ADC 
+		    MOVF	    VAL_ADC, W
+		    MOVWF	    TEMP_VAL_ADC    ;GUARDA UNA COMPIA DE VAL_ADC
+		    CLRF	    VAL_ADC_U	    ;UNIDAD DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_D	    ;UNIDAD DE DECENA DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_C	    ;UNIDAD DE CENTENA DEL VALOR A MOSTRAR
+		    CLRF	    VAL_ADC_M	    ;UNIDAD DE MIL DEL VALOR A MOSTRAR (NO IMPLEMENTADO)
+		    
+TEST_C		    MOVLW	    .100	    ;CALCULA LA CENTENA
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA CENTENA ES 0)
+		    GOTO	    ADD_C
+		    MOVLW	    .100          
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR
+		    GOTO	    TEST_D 
+		    
+TEST_D		    MOVLW	    .10		    ;CALCULA LA DECENA
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA DECENA ES 0)
+		    GOTO	    ADD_D
+		    MOVLW	    .10	    	        
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+		    GOTO	    TEST_U
+		    
+TEST_U		    MOVLW	    .1		    ;CALCULA LA UNIDAD
+		    SUBWF	    TEMP_VAL_ADC, F
+		    BTFSC	    STATUS, C	    ;VERIFICA LA RESTA NO PRODUZCA QUE EL NUMERO SE VUELVA NEGATIVO (SOLO SE DA CUANDO LA UNIDAD ES 0)
+		    GOTO	    ADD_U
+		    MOVLW	    .1		            
+		    ADDWF	    TEMP_VAL_ADC, F ;SI ES NEGATIVO RECUPERA EL VALOR 
+		    
+		    RETURN	
+
+ADD_C		    INCF	    VAL_ADC_C, F
+		    GOTO	    TEST_C
+
+ADD_D		    INCF	    VAL_ADC_D, F
+		    GOTO	    TEST_D	   
+
+ADD_U		    INCF	    VAL_ADC_U, F
+		    GOTO	    TEST_U
+		    
+;-----------------------------------------------------------------
+; DELAY5ms: retardo por software de 5ms usado para multiplexacion
+;	de displays 7 segmentos
+; Usado en: SHOW_ADC_DISPLAY
+;-----------------------------------------------------------------
 DELAY5ms	    BCF		    STATUS, RP0
 		    BCF		    STATUS, RP1	    ;BANCO 0
 		    MOVLW	    .5		    ;m=5
@@ -189,7 +195,7 @@ DELAY3		    DECFSZ	    DELAY3DSPL, F
 		    RETURN
 		    
 
-		    ;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSITIVA)
+;TABLA CON PARA ENCENDER LOS SEGMENTOS CORRESPONDIENTES A CATODO COMUN (LOGICA POSITIVA)
 TABLA_DSPL	    ADDWF	    PCL, F
 		    RETLW	    0X3F	    ;0
 		    RETLW	    0X06	    ;1
